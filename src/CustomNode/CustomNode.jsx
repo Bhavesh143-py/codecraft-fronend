@@ -37,7 +37,7 @@ const CustomNode = ({ data }) => {
                             Text
                         </label>
                         <input
-                            id= {data.label}
+                            id={data.label}
                             type="text"
                             onChange={handleInputChange} // Handle changes in input
                             onBlur={handleInputBlur} // Console the value when input loses focus

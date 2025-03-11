@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useModelConfigStore } from "../store/Mystore";
-const ModelNodeForm = ({ setSelectedNode,onUpdate }) => {
+const ModelNodeForm = ({ setSelectedNode, onUpdate }) => {
     const { setModelConfig } = useModelConfigStore();
     const [config, setConfig] = useState({
         modelName: "claude-3-5-sonnet-latest",

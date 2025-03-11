@@ -10,7 +10,7 @@ import ReactFlow, {
     useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import {CustomFile} from "../CustomNode/CustomFile";
+import { CustomFile } from "../CustomNode/CustomFile";
 import CustomNode from "../CustomNode/CustomNode";
 import { ModelNode } from "../CustomNode/ModelNode";
 import ChatInputConfig from "../Input-config/ChatInputConfig";
@@ -27,7 +27,7 @@ const Canvas = () => {
         updateNode: updateNodeInStore,
         updateConnection: updateConnectionInStore,
         setConnections: setConnectionsInStore,
-        removeNode : removeNodeFromStore,
+        removeNode: removeNodeFromStore,
         updateWorkflowMetadata
     } = useWorkflowStore();
 
@@ -174,8 +174,8 @@ const Canvas = () => {
                 updated_at: new Date().toISOString()
             });
         }
-    }, [edges,setConnectionsInStore, selectedWorkflowId, updateWorkflowMetadata]);
-    
+    }, [edges, setConnectionsInStore, selectedWorkflowId, updateWorkflowMetadata]);
+
 
     const onConnect = useCallback((params) => {
         setEdges((eds) => {
@@ -202,13 +202,13 @@ const Canvas = () => {
         });
     }, [selectedWorkflowId, updateConnectionInStore]);
     const onNodeContextMenu = (event, node) => {
-    console.log(node)
-    event.preventDefault();
-    if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
-      setSelectedNode(node);
-      setIsModalOpen(true);
-    }
-  };
+        console.log(node)
+        event.preventDefault();
+        if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
+            setSelectedNode(node);
+            setIsModalOpen(true);
+        }
+    };
     const handleSettingsChange = useCallback((updatedSettings) => {
         if (!selectedNode) return;
 
@@ -245,9 +245,10 @@ const Canvas = () => {
             id: newNodeId,
             type: "customNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel,
+            data: {
+                label: nodeLabel,
                 chatSettings: { showSenderName: true, showSessionId: false },
-             },
+            },
         };
 
         setNodes((nds) => nds.concat(newNode));
@@ -268,7 +269,8 @@ const Canvas = () => {
             id: newNodeId,
             type: "customFile",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel ,
+            data: {
+                label: nodeLabel,
                 chatSettings: { showSenderName: true, showSessionId: false },
             },
         };
@@ -396,7 +398,7 @@ const Canvas = () => {
                         }}
                     />
                 );
-           
+
         }
     };
 
@@ -502,11 +504,11 @@ const Canvas = () => {
                             <Controls className="flex flex-row gap-4 p-4 bg-gray-700 rounded-lg text-white" />
                         </ReactFlow>
                     </div>
-                    {selectedNode && isModalOpen &&(
+                    {selectedNode && isModalOpen && (
                         <>
                             {renderConfigForm()}
                         </>
-                        
+
                     )}
                 </div>
             </div>

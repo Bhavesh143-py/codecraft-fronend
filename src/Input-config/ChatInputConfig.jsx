@@ -23,14 +23,15 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
                 text: selectedNode?.data?.chatSettings?.text || "",
                 showText: selectedNode?.data?.chatSettings?.showText ?? true,
             });
-        } 
+        }
     }, [selectedNode, nodeLabel]);
 
     useEffect(() => {
         onSettingsChange(settings);
     }, [settings, onSettingsChange]);
 
-    const handleClose = () => {setIsModalOpen(false)
+    const handleClose = () => {
+        setIsModalOpen(false)
         setSelectedNode(null);
     };
 
