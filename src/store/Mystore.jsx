@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { produce } from 'immer';
 import axios from 'axios';
-import { version } from 'react';
+
 const useWorkflowStore = create(
     persist(
         (set, get) => ({
@@ -28,6 +28,7 @@ const useWorkflowStore = create(
             })),
             selectWorkflow: (id) => set({ selectedWorkflowId: id }),
 
+            // Fix the updateNode function to handle Chat and Text inputs properly
             updateNode: (nodeId, newData) => set(produce(state => {
                 const workflowId = state.selectedWorkflowId;
                 if (workflowId && state.workflows[workflowId]) {
@@ -41,20 +42,46 @@ const useWorkflowStore = create(
                         return;
                     }
 
-                    // Update the node data
+                    const node = state.workflows[workflowId].nodes[nodeId];
+                    const nodeType = node.type;
+
+                    // Update the node data based on node type
                     if (newData.data) {
-                        state.workflows[workflowId].nodes[nodeId].config = {
-                            ...state.workflows[workflowId].nodes[nodeId].config,
-                            ...newData.data
-                        };
+                        // Handle different node types appropriately
+                        if (nodeType === "Chat Input") {
+                            // For Chat Input nodes, update the specific fields
+                            node.config = {
+                                ...node.config,
+                                Text: newData.data.text || newData.data.Text || node.config.Text || "",
+                                store_messages: newData.data.storeMessages || newData.data.store_messages || node.config.store_messages || false,
+                                sessionID: newData.data.sessionId || newData.data.sessionID || node.config.sessionID || "",
+                                files: newData.data.files || node.config.files || "path_to_file"
+                            };
+                        }
+                        else if (nodeType === "Text Input") {
+                            // For Text Input nodes, update the Text field
+                            node.config = {
+                                ...node.config,
+                                Text: newData.data.text || newData.data.Text || node.config.Text || "hi"
+                            };
+                        }
+                        else {
+                            // For other node types, spread the data directly
+                            node.config = {
+                                ...node.config,
+                                ...newData.data
+                            };
+                        }
                     }
+
+                    // Update type if provided
                     if (newData.type) {
-                        state.workflows[workflowId].nodes[nodeId].type = newData.type;
+                        node.type = newData.type;
                     }
 
                     // Update position if provided
                     if (newData.position) {
-                        state.workflows[workflowId].nodes[nodeId].position = newData.position;
+                        node.position = newData.position;
                     }
 
                     // Update the workflow's updated_at timestamp
@@ -69,12 +96,29 @@ const useWorkflowStore = create(
                     if (!state.workflows[workflowId].nodes) {
                         state.workflows[workflowId].nodes = {};
                     }
-                    let nodeType = nodeData.type === "customNode" ? "TextInput" :
-                        nodeData.type === "customFile" ? "File" :
-                            nodeData.type === "ModelNode" ?
-                                // Use the modelName if available, or default to AnthropicLLM
-                                (nodeData.data && nodeData.data.modelName) || "ModelNode"
-                                : nodeData.type;
+
+                    // Determine the correct node type
+                    let nodeType;
+
+                    // First check by node ID pattern
+                    if (nodeData.id.startsWith('model_')) {
+                        nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+                    } else if (nodeData.id.startsWith('file_')) {
+                        nodeType = "File";
+                    } else if (nodeData.type === "ModelNode") {
+                        // If it's explicitly a ModelNode type
+                        nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+                    } else {
+                        // Otherwise use the label or fall back to a mapping
+                        nodeType = nodeData.label === "Chat Input" ? "Chat Input" :
+                            nodeData.label === "Text Input" ? "Text Input" :
+                                nodeData.label === "Start Node" ? "Start Node" :
+                                    nodeData.label === "Chat Output" ? "Chat Output" :
+                                        nodeData.label === "Text Output" ? "Text Output" :
+                                            nodeData.type === "customFile" ? "File" :
+                                                "customNode"; // Default type
+                    }
+
                     // Format the node to match your desired structure
                     const formattedNode = {
                         type: nodeType,
@@ -90,14 +134,33 @@ const useWorkflowStore = create(
                                 maximum_tokens: (nodeData.data && nodeData.data.maximum_tokens) || 4096,
                                 API_key: (nodeData.data && nodeData.data.API_key) || ""
                             }),
-                             ...(nodeData.type === "customFile" && {
+                            // Directly store Text properties for Chat Input instead of nesting under chatSettings
+                            ...(nodeData.label === "Chat Input" && {
+                                Text: (nodeData.data && nodeData.data.text) ||
+                                    (nodeData.data && nodeData.data.Text) ||
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "",
+                                store_messages: (nodeData.data && nodeData.data.storeMessages) ||
+                                    (nodeData.data && nodeData.data.store_messages) ||
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.storeMessages) || false,
+                                sessionID: (nodeData.data && nodeData.data.sessionId) ||
+                                    (nodeData.data && nodeData.data.sessionID) ||
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.sessionId) || "",
+                                files: (nodeData.data && nodeData.data.files) ||
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.files) || "path_to_file"
+                            }),
+                            // Directly store Text property for Text Input
+                            ...(nodeData.label === "Text Input" && {
+                                Text: (nodeData.data && nodeData.data.text) ||
+                                    (nodeData.data && nodeData.data.Text) ||
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "hi",
+                            }),
+                            ...(nodeData.type === "customFile" && {
                                 filepath: nodeData.data?.filepath || "",
                                 fileText: nodeData.data?.fileText || "",
                                 fileBase64: nodeData.data?.fileBase64 || "",
                                 fileType: nodeData.data?.fileType || ""
                             })
                         },
-
                     };
 
                     // Add the new node
@@ -107,7 +170,6 @@ const useWorkflowStore = create(
                     state.workflows[workflowId].updated_at = new Date().toISOString();
                 }
             })),
-
             removeNode: (nodeId) => set(produce(state => {
                 const workflowId = state.selectedWorkflowId;
                 if (workflowId && state.workflows[workflowId]?.nodes) {

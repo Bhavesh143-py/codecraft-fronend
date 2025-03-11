@@ -37,27 +37,36 @@ export const extractFileContent = async (file) => {
         }
         // Handle PDFs
         else if (file.type === "application/pdf") {
-            file.arrayBuffer().then(async (pdfArrayBuffer) => {
-                try {
-                    const pdf = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
-                    let extractedText = "";
+            // First, convert the PDF to base64
+            const base64Reader = new FileReader();
+            base64Reader.onload = (e) => {
+                const fileBase64 = e.target.result;
 
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        const pageText = textContent.items.map((item) => item.str).join(" ");
-                        extractedText += pageText + "\n";
+                // Then process the PDF for text extraction
+                file.arrayBuffer().then(async (pdfArrayBuffer) => {
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+                        let extractedText = "";
+
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map((item) => item.str).join(" ");
+                            extractedText += pageText + "\n";
+                        }
+
+                        resolve({
+                            fileBase64: fileBase64,
+                            fileText: extractedText,
+                            filepath: file.name,
+                            fileType: file.type
+                        });
+                    } catch (error) {
+                        reject(error);
                     }
-
-                    resolve({
-                        fileText: extractedText,
-                        filepath: file.name,
-                        fileType: file.type
-                    });
-                } catch (error) {
-                    reject(error);
-                }
-            });
+                });
+            };
+            base64Reader.readAsDataURL(file);
         }
         // Unsupported File Types
         else {

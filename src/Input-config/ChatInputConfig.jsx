@@ -1,154 +1,211 @@
-import React, { useState } from "react";
-import { UploadCloud } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { UploadCloud, X } from "lucide-react";
 
-const ChatInputConfig = ({ setSelectedNode }) => {
-    const [settings, setSettings] = useState({
-        text: "",
-        storeMessages: false,
-        senderType: "User",
-        senderName: "User",
-        sessionId: "",
-        files: null,
-        backgroundColor: "",
-        icon: "",
-        textColor: "",
-        showText: false,
-        showStoreMessages: false,
-        showSenderType: false,
-        showSenderName: false,
-        showSessionId: false,
-        showFiles: false,
-        showBackgroundColor: false,
-        showIcon: false,
-        showTextColor: false,
-    });
+const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeLabel, setSelectedNode }) => {
+    const [settings, setSettings] = useState({});
 
-    const handleClose = () => {
+
+    useEffect(() => {
+        if (nodeLabel === "Chat Input") {
+            setSettings({
+                text: selectedNode?.data?.chatSettings?.text || "",
+                storeMessages: selectedNode?.data?.chatSettings?.storeMessages || false,
+                senderName: selectedNode?.data?.chatSettings?.senderName || "User",
+                sessionId: selectedNode?.data?.chatSettings?.sessionId || "",
+                files: selectedNode?.data?.chatSettings?.files || null,
+                showText: selectedNode?.data?.chatSettings?.showText ?? true,
+                showSessionId: selectedNode?.data?.chatSettings?.showSessionId ?? false,
+                showStoreMessages: selectedNode?.data?.chatSettings?.showStoreMessages ?? false,
+                showUploadFile: selectedNode?.data?.chatSettings?.showUploadFile ?? false,
+            });
+        } else if (nodeLabel === "Text Input") {
+            setSettings({
+                text: selectedNode?.data?.chatSettings?.text || "",
+                showText: selectedNode?.data?.chatSettings?.showText ?? true,
+            });
+        } 
+    }, [selectedNode, nodeLabel]);
+
+    useEffect(() => {
+        onSettingsChange(settings);
+    }, [settings, onSettingsChange]);
+
+    const handleClose = () => {setIsModalOpen(false)
         setSelectedNode(null);
     };
 
-    const handleShowToggle = (field) => {
-        setSettings({
-            ...settings,
-            [`show${field}`]: !settings[`show${field}`],
-        });
+    const handleInputChange = (e, key) => {
+        setSettings((prev) => ({ ...prev, [key]: e.target.value }));
+    };
+
+    const handleToggleChange = (key) => {
+        setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleFileChange = (e) => {
+        setSettings((prev) => ({ ...prev, files: e.target.files[0] }));
+    };
+
+    const handleAFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setSettings((prev) => ({ ...prev, uploadFiles: file }))
+    };
+
+    const handleCheckboxChange = (key) => {
+        setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const renderFields = () => {
+        if (nodeLabel === "Chat Input") {
+            return (
+                <>
+                    <div className="flex flex-col space-y-3 group relative">
+                        <label className="text-sm text-gray-600 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="text"
+                                className="mr-2 w-4 h-4"
+                                checked={settings.showText}
+                                onChange={() => handleCheckboxChange("showText")}
+                            />
+                            Text
+                        </label>
+                        <input
+                            type="text"
+                            value={settings.text}
+                            onChange={(e) => handleInputChange(e, "text")}
+                            className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter Text"
+                        />
+                        <div className="text-xs text-gray-500">Message to be passed as input.</div>
+                    </div>
+
+                    <div className="flex flex-col space-y-3 group relative">
+                        <label className="text-sm text-gray-600 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="sessionId"
+                                className="mr-2 w-4 h-4"
+                                checked={settings.showSessionId}
+                                onChange={() => handleCheckboxChange("showSessionId")}
+                            />
+                            Session ID
+                        </label>
+                        <input
+                            type="text"
+                            value={settings.sessionId}
+                            onChange={(e) => handleInputChange(e, "sessionId")}
+                            className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter Session ID"
+                        />
+                        <div className="text-xs text-gray-500">The session ID of the chat.</div>
+                    </div>
+
+                    <div className="flex items-center justify-between group relative">
+                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                                type="checkbox"
+                                name="showStoreMessages"
+                                checked={settings.showStoreMessages}
+                                onChange={() => handleCheckboxChange("showStoreMessages")}
+                                className="mr-2 w-4 h-4"
+                            />
+                            Store Messages
+                        </label>
+                        <label className="relative inline-block w-12 h-6">
+                            <input
+                                type="checkbox"
+                                checked={settings.storeMessages}
+                                onChange={() => handleToggleChange("storeMessages")}
+                                className="hidden"
+                            />
+                            <span className={`block w-full h-full rounded-full cursor-pointer transition-all duration-300 ${settings.storeMessages ? "bg-green-500" : "bg-gray-300"}`}>
+                                <span className={`block w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-300 ${settings.storeMessages ? "translate-x-6" : "translate-x-0"}`}></span>
+                            </span>
+                        </label>
+                        <div className="text-xs text-gray-500">Store the message in the history.</div>
+                    </div>
+
+                    <div className="flex flex-col space-y-3 group relative">
+                        <label className="text-sm text-gray-600 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                name="uploadFile"
+                                className="mr-2 w-4 h-4"
+                                checked={settings.showUploadFile}
+                                onChange={() => handleCheckboxChange("showUploadFile")}
+                            />
+                            Upload File
+                        </label>
+                        <label className="cursor-pointer flex items-center gap-2 text-blue-500 hover:text-blue-600">
+                            <UploadCloud className="w-5 h-5" />
+                            <span>{settings.files ? settings.files.name : "Upload a file..."}</span>
+                            <input type="file" className="hidden" onChange={handleFileChange} />
+                        </label>
+                        <div className="text-xs text-gray-500">Files to be sent with the message.</div>
+                    </div>
+                </>
+            );
+        } else if (nodeLabel === "Text Input") {
+            return (
+                <div className="flex flex-col space-y-3 group relative">
+                    <label className="text-sm text-gray-600 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            name="text"
+                            className="mr-2 w-4 h-4"
+                            checked={settings.showText}
+                            onChange={() => handleCheckboxChange("showText")}
+                        />
+                        Text
+                    </label>
+                    <input
+                        type="text"
+                        value={settings.text}
+                        onChange={(e) => handleInputChange(e, "text")}
+                        className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-black focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter Text"
+                    />
+                    <div className="text-xs text-gray-500">Message to be passed as input.</div>
+                </div>
+            );
+        } else if (nodeLabel === "Upload a file") {
+            return (
+                <div className="flex flex-col space-y-3 group relative">
+                    <label className="text-sm text-gray-600 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            name="uploadFile"
+                            className="mr-2 w-4 h-4"
+                            checked={settings.showAUploadFile}
+                            onChange={() => handleCheckboxChange("showAUploadFile")}
+                        />
+                        Upload File
+                    </label>
+                    <label className="cursor-pointer flex items-center gap-2 text-blue-500 hover:text-blue-600">
+                        <UploadCloud className="w-5 h-5" />
+                        <span>{settings.uploadFiles ? settings.uploadFiles.name : "Upload a file..."}</span>
+                        <input type="file" className="hidden" onChange={handleAFileChange} />
+                    </label>
+                    <div className="text-xs text-gray-500">Files to be sent with the message.</div>
+                </div>
+            );
+        }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 m-5 z-50 flex justify-center items-center rounded-lg">
-            <div className="bg-[#141414] text-white pt-5 rounded-lg w-full m-5 h-full">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold flex items-center gap-4">Chat Input</h2>
-                    <button className="text-white text-lg" onClick={handleClose}>Close</button>
+        <div className="fixed inset-0 flex bg-black bg-opacity-50 z-50">
+            <div className="bg-white text-black rounded-lg border border-blue-200 w-full max-w-lg max-h-[90vh] p-6 shadow-lg overflow-y-auto">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold ">{nodeLabel} Configuration</h2>
+                    <button onClick={handleClose} className="text-gray-400 hover:text-black mt-5">
+                        <X size={20} />
+                    </button>
                 </div>
-                <p className="text-gray-400 text-sm mt-2">Get chat inputs from the Playground.</p>
-                <div className="border border-gray-600 rounded-lg m-5 p-6 space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
-                    <table className="w-full text-sm border-collapse mx-auto">
-                        <thead>
-                            <tr className="border-b border-gray-300">
-                                <th className="px-4 py-2 text-left">Field Name</th>
-                                <th className="px-4 py-2 text-left">Description</th>
-                                <th className="px-4 py-2 text-left">Value</th>
-                                <th className="px-4 py-2 text-left">Show</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {[{
-                                name: "Text", desc: "Message to be passed as input.", type: "text", key: "text"
-                            }, {
-                                name: "Store Messages", desc: "Store the message in history.", type: "toggle", key: "storeMessages"
-                            }, {
-                                name: "Sender Type", desc: "Type of sender.", type: "dropdown", key: "senderType", options: ["User", "Admin"]
-                            }, {
-                                name: "Sender Name", desc: "Name of the sender.", type: "text", key: "senderName"
-                            }, {
-                                name: "Session ID", desc: "The session ID of the chat.", type: "text", key: "sessionId"
-                            }, {
-                                name: "Files", desc: "Files to be sent with the message.", type: "file", key: "files"
-                            }, {
-                                name: "Background Color", desc: "Background color of the icon.", type: "text", key: "backgroundColor"
-                            }, {
-                                name: "Icon", desc: "The icon of the message.", type: "text", key: "icon"
-                            }, {
-                                name: "Text Color", desc: "The text color of the name.", type: "text", key: "textColor"
-                            }].map((field) => (
-                                <tr key={field.key} className="border-b border-gray-300">
-                                    <td className="px-4 py-3">{field.name}</td>
-                                    <td className="px-4 py-3 text-gray-400">{field.desc}</td>
-                                    <td className="px-4 py-3">
-                                        {field.type === "text" && (
-                                            <input
-                                                type="text" placeholder="Type something..."
-                                                value={settings[field.key]}
-                                                onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
-                                                className="bg-gray-800 border border-gray-600 text-sm p-2 rounded-md w-full"
-                                            />
-                                        )}
-                                        {field.type === "dropdown" && (
-                                            <select
-                                                value={settings[field.key]}
-                                                onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
-                                                className="bg-gray-800 border border-gray-600 text-sm p-2 rounded-md w-full"
-                                            >
-                                                {field.options.map((option) => (
-                                                    <option key={option} value={option}>{option}</option>
-                                                ))}
-                                            </select>
-                                        )}
-                                        {field.type === "file" && (
-                                            <label className="cursor-pointer flex items-center gap-2 text-blue-400">
-                                                <UploadCloud className="w-5 h-5" />
-                                                <span>{settings.files ? settings.files.name : "Upload a file..."}</span>
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => setSettings({ ...settings, files: e.target.files[0] })}
-                                                />
-                                            </label>
-                                        )}
-                                        {field.type === "toggle" && (
-                                            <label className="relative inline-block w-12 h-6">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={settings[field.key]}
-                                                    onChange={(e) => setSettings({ ...settings, [field.key]: e.target.checked })}
-                                                    className="opacity-0 w-0 h-0 absolute"
-                                                />
-                                                <span
-                                                    className={`block w-full h-full rounded-full cursor-pointer transition-all duration-300 
-                          ${settings[field.key] ? "bg-[#12f4b7]" : "bg-gray-600"}`}
-                                                >
-                                                    <span
-                                                        className={`block w-6 h-6 bg-white rounded-full transition-transform duration-300 
-                            ${settings[field.key] ? "transform translate-x-6" : "transform translate-x-0"}`}
-                                                    ></span>
-                                                </span>
-                                            </label>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <label className="relative inline-block w-12 h-6">
-                                            <input
-                                                type="checkbox"
-                                                checked={settings[`show${field.key.charAt(0).toUpperCase() + field.key.slice(1)}`]}
-                                                onChange={() => handleShowToggle(field.key.charAt(0).toUpperCase() + field.key.slice(1))}
-                                                className="opacity-0 w-0 h-0 absolute"
-                                            />
-                                            <span
-                                                className={`block w-full h-full rounded-full cursor-pointer transition-all duration-300 
-                          ${settings[`show${field.key.charAt(0).toUpperCase() + field.key.slice(1)}`] ? "bg-[#12f4b7]" : "bg-gray-600"}`}
-                                            >
-                                                <span
-                                                    className={`block w-6 h-6 bg-white rounded-full transition-transform duration-300 
-                            ${settings[`show${field.key.charAt(0).toUpperCase() + field.key.slice(1)}`] ? "transform translate-x-6" : "transform translate-x-0"}`}
-                                                ></span>
-                                            </span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="space-y-6 overflow-y-auto">
+                    {renderFields()}
                 </div>
             </div>
         </div>

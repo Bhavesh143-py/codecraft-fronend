@@ -31,10 +31,17 @@ const Canvas = () => {
         updateWorkflowMetadata
     } = useWorkflowStore();
 
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState([
+        {
+            id: "1",
+            type: "customNode",
+            position: { x: 200, y: 200 },
+            data: { label: "Start Node", chatSettings: { showSenderName: true, showSessionId: false } },
+        },
+    ]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedNode, setSelectedNode] = useState(null);
-
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const nodeTypes = useMemo(() => ({
         customNode: CustomNode,
         customFile: CustomFile,
@@ -49,18 +56,42 @@ const Canvas = () => {
             // Check if workflow has existing nodes
             if (workflowData.nodes) {
                 // Convert stored nodes to ReactFlow format
-                const storedNodes = Object.values(workflowData.nodes || {}).map(node => ({
-                    id: node.id,
-                    // Map the node types from your format to ReactFlow node types
-                    type: node.type === "TextInput" ? "customNode" :
-                        node.type === "File" ? "customFile" :
-                            node.type === "AnthropicLLM" || "ModelNode" ||"ChatGPT" ||"Gemini" ? "ModelNode" : "customNode",
-                    position: node.position || { x: 100, y: 100 },
-                    data: {
-                        label: node.type,
-                        ...node.config
+                const storedNodes = Object.values(workflowData.nodes || {}).map(node => {
+                    // Determine correct node type based on the stored node type
+                    let nodeType;
+
+                    // First check if node.id starts with specific prefixes
+                    if (node.id.startsWith('model_')) {
+                        nodeType = "ModelNode";
+                    } else if (node.id.startsWith('file_')) {
+                        nodeType = "customFile";
+                    } else if (node.id === "1" || node.id.startsWith('node_')) {
+                        nodeType = "customNode";
+                    } else {
+                        // If no ID pattern match, use the type property with proper mapping
+                        nodeType = node.type === "Text Input" ||
+                            node.type === "Start Node" ||
+                            node.type === "Chat Input" ||
+                            node.type === "Text Output" ||
+                            node.type === "Chat Output" ? "customNode" :
+                            node.type === "Upload a file" || node.type === "File" ? "customFile" :
+                                node.type === "AnthropicLLM" || node.type === "ModelNode" ||
+                                    node.type === "ChatGPT" || node.type === "Gemini" ? "ModelNode" :
+                                    "customNode"; // Default to customNode
                     }
-                }));
+
+                    return {
+                        id: node.id,
+                        type: nodeType,
+                        position: node.position || { x: 100, y: 100 },
+                        data: {
+                            label: node.type,
+                            ...node.config,
+                            // Ensure model property is set for ModelNode types
+                            ...(nodeType === "ModelNode" ? { model: true } : {})
+                        }
+                    };
+                });
 
                 if (storedNodes.length > 0) {
                     setNodes(storedNodes);
@@ -170,7 +201,43 @@ const Canvas = () => {
             return newEdges;
         });
     }, [selectedWorkflowId, updateConnectionInStore]);
+    const onNodeContextMenu = (event, node) => {
+    console.log(node)
+    event.preventDefault();
+    if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
+      setSelectedNode(node);
+      setIsModalOpen(true);
+    }
+  };
+    const handleSettingsChange = useCallback((updatedSettings) => {
+        if (!selectedNode) return;
 
+        // Prevent unnecessary updates with empty settings
+        if (!updatedSettings || Object.keys(updatedSettings).length === 0) return;
+
+        setNodes((nds) =>
+            nds.map((node) => {
+                if (node.id === selectedNode.id) {
+                    const existingSettings = node.data.chatSettings || {};
+                    const isDifferent = JSON.stringify(existingSettings) !== JSON.stringify(updatedSettings);
+
+                    if (isDifferent || updatedSettings.file) {
+                        return {
+                            ...node,
+                            data: {
+                                ...node.data,
+                                chatSettings: updatedSettings,
+                                file: updatedSettings.file || node.data.file, // Store uploaded file
+                            },
+                        };
+                    }
+                }
+                return node;
+            })
+        );
+
+        console.log("Updated Chat Settings for Node:", selectedNode.id, updatedSettings);
+    }, [selectedNode, setNodes]);
     // Add a new node to the canvas and store it
     const onAddNode = (nodeLabel) => {
         const newNodeId = `node_${Date.now()}`;
@@ -178,7 +245,9 @@ const Canvas = () => {
             id: newNodeId,
             type: "customNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel },
+            data: { label: nodeLabel,
+                chatSettings: { showSenderName: true, showSessionId: false },
+             },
         };
 
         setNodes((nds) => nds.concat(newNode));
@@ -199,7 +268,9 @@ const Canvas = () => {
             id: newNodeId,
             type: "customFile",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel },
+            data: { label: nodeLabel ,
+                chatSettings: { showSenderName: true, showSessionId: false },
+            },
         };
 
         setNodes((nds) => nds.concat(newNode));
@@ -255,6 +326,7 @@ const Canvas = () => {
                         <button onClick={() => setSelectedNode(null)} className="float-right px-2 py-1 bg-gray-200 rounded">X</button>
                         <ModelNodeForm
                             setSelectedNode={setSelectedNode}
+                            setIsModalOpen={setIsModalOpen}
                             onUpdate={(config) => {
                                 // Update node in ReactFlow state
                                 setNodes(nodes => nodes.map(n =>
@@ -271,18 +343,23 @@ const Canvas = () => {
                 return (
                     <div className="p-4 border-l border-gray-300">
                         <ChatInputConfig
-                            node={selectedNode}
                             setSelectedNode={setSelectedNode}
+                            nodeLabel={selectedNode?.data?.label}
+                            setIsModalOpen={setIsModalOpen}
+                            onSettingsChange={handleSettingsChange}
                             onUpdate={(config) => {
                                 // Update node in ReactFlow state
-                                setNodes(nodes => nodes.map(n =>
-                                    n.id === selectedNode.id
-                                        ? { ...n, data: { ...n.data, ...config } }
-                                        : n
-                                ));
-
-                                // Update node in store
-                                updateNodeInStore(selectedNode.id, { data: { ...selectedNode.data, ...config } });
+                                setNodes((nodes) =>
+                                    nodes.map((n) =>
+                                        n.id === selectedNode.id
+                                            ? { ...n, data: { ...n.data, ...config } }
+                                            : n
+                                    )
+                                );
+                                updateNodeInStore(selectedNode.id, {
+                                    data: { ...selectedNode.data, ...config },
+                                    type: config.modelName,
+                                });
                             }}
                         />
                     </div>
@@ -292,6 +369,7 @@ const Canvas = () => {
                     <FileUploadForm
                         node={selectedNode}  // Pass the entire node
                         setSelectedNode={setSelectedNode}
+                        setIsModalOpen={setIsModalOpen}
                         onFileUpdate={(fileConfig) => {
                             // Update node in ReactFlow state
                             setNodes(nodes => nodes.map(n =>
@@ -318,13 +396,7 @@ const Canvas = () => {
                         }}
                     />
                 );
-            default:
-                return (
-                    <div className="p-4 border-l border-gray-300">
-                        <button onClick={() => { setSelectedNode(null) }} className="float-right px-2 py-1 bg-gray-200 rounded">X</button>
-                        <p>No configuration available for this node.</p>
-                    </div>
-                );
+           
         }
     };
 
@@ -408,6 +480,7 @@ const Canvas = () => {
                         onAddNode={onAddNode}
                         onAddFile={onAddFile}
                         onAddModelNode={onAddModelNode}
+                        selectedWorkflowId={selectedWorkflowId}
                         className="w-1/4 bg-white border-r border-gray-300 p-2 overflow-y-auto"
                     />
                     <div className="flex-1 relative bg-[#eef9fa]">
@@ -418,6 +491,7 @@ const Canvas = () => {
                             onEdgesChange={handleEdgesChange}
                             onConnect={onConnect}
                             onNodeClick={onNodeClick}
+                            onNodeContextMenu={onNodeContextMenu}
                             onNodeDragStop={onNodeDragStop}
                             nodeTypes={nodeTypes}
                             proOptions={{ hideAttribution: true }}
@@ -428,7 +502,7 @@ const Canvas = () => {
                             <Controls className="flex flex-row gap-4 p-4 bg-gray-700 rounded-lg text-white" />
                         </ReactFlow>
                     </div>
-                    {selectedNode && (
+                    {selectedNode && isModalOpen &&(
                         <>
                             {renderConfigForm()}
                         </>

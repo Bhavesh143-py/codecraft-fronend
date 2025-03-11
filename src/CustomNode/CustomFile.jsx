@@ -41,7 +41,7 @@ const CustomFile = ({ data }) => {
     }
     return (
         <div className="w-[250px] bg-white text-[#0b0b0b] rounded-[16px] border border-[#c0e7fe] text-center shadow-lg 
-                    transition-all duration-300 hover:scale-105 hover:shadow-2xl relative">
+                    transition-all duration-300">
             {/* Header */}
             <div className="flex items-center bg-[#f5f1f1] p-3 rounded-t-[16px]">
                 <File className="h-[18px] text-[#05a8ed] mr-2" />
