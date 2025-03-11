@@ -10,7 +10,7 @@ const AppsList = () => {
         const fetchApps = async () => {
             try {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/user/all`);
-                setApps(response.data); // Assuming API returns an array
+                setApps(Array.isArray(response.data) ? response.data : []);// Assuming API returns an array
             } catch (err) {
                 setError("Failed to fetch apps. Please try again.");
                 console.error("Error fetching apps:", err);
