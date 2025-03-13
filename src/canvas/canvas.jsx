@@ -207,6 +207,7 @@ const Canvas = () => {
         if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
             setSelectedNode(node);
             setIsModalOpen(true);
+            console.log(selectedNode)
         }
     };
     const handleSettingsChange = useCallback((updatedSettings) => {
@@ -343,9 +344,9 @@ const Canvas = () => {
                 );
             case "customNode":
                 return (
-                    <div className="p-4 border-l border-gray-300">
+                    <div className="p-5 border-l border-gray-300">
                         <ChatInputConfig
-                            setSelectedNode={setSelectedNode}
+                            setSelectedNode={selectedNode}
                             nodeLabel={selectedNode?.data?.label}
                             setIsModalOpen={setIsModalOpen}
                             onSettingsChange={handleSettingsChange}
@@ -505,11 +506,11 @@ const Canvas = () => {
                         </ReactFlow>
                     </div>
                     {selectedNode && isModalOpen && (
-                        <>
-                            {renderConfigForm()}
-                        </>
+    <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
+        {renderConfigForm()}
+    </div>
+)}
 
-                    )}
                 </div>
             </div>
         </>

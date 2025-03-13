@@ -55,7 +55,7 @@ const useWorkflowStore = create(
                                 Text: newData.data.text || newData.data.Text || node.config.Text || "",
                                 store_messages: newData.data.storeMessages || newData.data.store_messages || node.config.store_messages || false,
                                 sessionID: newData.data.sessionId || newData.data.sessionID || node.config.sessionID || "",
-                                files: newData.data.files || node.config.files || "path_to_file"
+                                files: newData.files || node.config.files || ""
                             };
                         }
                         else if (nodeType === "Text Input") {
@@ -146,7 +146,7 @@ const useWorkflowStore = create(
                                     (nodeData.data && nodeData.data.sessionID) ||
                                     (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.sessionId) || "",
                                 files: (nodeData.data && nodeData.data.files) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.files) || "path_to_file"
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.files) || "path_to_file"
                             }),
                             // Directly store Text property for Text Input
                             ...(nodeData.label === "Text Input" && {
