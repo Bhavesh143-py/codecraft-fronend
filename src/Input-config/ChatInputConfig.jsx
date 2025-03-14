@@ -5,30 +5,35 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
     const [settings, setSettings] = useState({});
 
 
+
     useEffect(() => {
         if (nodeLabel === "Chat Input") {
             setSettings({
-                text: selectedNode?.data?.chatSettings?.text || "",
-                storeMessages: selectedNode?.data?.chatSettings?.storeMessages || false,
-                senderName: selectedNode?.data?.chatSettings?.senderName || "User",
-                sessionId: selectedNode?.data?.chatSettings?.sessionId || "",
-                files: selectedNode?.data?.chatSettings?.files || null,
-                showText: selectedNode?.data?.chatSettings?.showText ?? true,
-                showSessionId: selectedNode?.data?.chatSettings?.showSessionId ?? false,
-                showStoreMessages: selectedNode?.data?.chatSettings?.showStoreMessages ?? false,
-                showUploadFile: selectedNode?.data?.chatSettings?.showUploadFile ?? false,
+                text: setSelectedNode?.data?.chatSettings?.text || "",
+                storeMessages: setSelectedNode?.data?.chatSettings?.storeMessages || false,
+                senderName: setSelectedNode?.data?.chatSettings?.senderName || "User",
+                sessionId: setSelectedNode?.data?.chatSettings?.sessionId || "",
+                files: setSelectedNode?.data?.chatSettings?.files || null,
+                showText: setSelectedNode?.data?.chatSettings?.showText ?? true,
+                showSessionId: setSelectedNode?.data?.chatSettings?.showSessionId ?? false,
+                showStoreMessages: setSelectedNode?.data?.chatSettings?.showStoreMessages ?? false,
+                showUploadFile: setSelectedNode?.data?.chatSettings?.showUploadFile ?? false,
             });
         } else if (nodeLabel === "Text Input") {
             setSettings({
-                text: selectedNode?.data?.chatSettings?.text || "",
-                showText: selectedNode?.data?.chatSettings?.showText ?? true,
+                text: setSelectedNode?.data?.chatSettings?.text || "",
+                showText: setSelectedNode?.data?.chatSettings?.showText ?? true,
             });
         }
-    }, [selectedNode, nodeLabel]);
+    }, [setSelectedNode, nodeLabel]);
 
-    useEffect(() => {
+    // useEffect(() => {
+    //     onSettingsChange(settings);
+    // }, [settings, onSettingsChange]);
+
+    const dataSubmit=()=>{
         onSettingsChange(settings);
-    }, [settings, onSettingsChange]);
+    }
 
     const handleClose = () => {
         setIsModalOpen(false)
@@ -36,6 +41,7 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
     };
 
     const handleInputChange = (e, key) => {
+        console.log(key)
         setSettings((prev) => ({ ...prev, [key]: e.target.value }));
     };
 
@@ -51,7 +57,7 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
         const file = e.target.files[0];
         if (!file) return;
 
-        setSettings((prev) => ({ ...prev, uploadFiles: file }))
+        setSettings((prev) => ({ ...prev, files: file }))
     };
 
     const handleCheckboxChange = (key) => {
@@ -149,7 +155,9 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
                     </div>
                 </>
             );
-        } else if (nodeLabel === "Text Input") {
+        }
+        
+        else if (nodeLabel === "Text Input") {
             return (
                 <div className="flex flex-col space-y-3 group relative">
                     <label className="text-sm text-gray-600 flex items-center gap-2">
@@ -197,19 +205,28 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
     };
 
     return (
-        <div className="fixed inset-0 flex bg-black bg-opacity-50 z-50">
-            <div className="bg-white text-black rounded-lg border border-blue-200 w-full max-w-lg max-h-[90vh] p-6 shadow-lg overflow-y-auto">
-                <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold ">{nodeLabel} Configuration</h2>
-                    <button onClick={handleClose} className="text-gray-400 hover:text-black mt-5">
-                        <X size={20} />
-                    </button>
-                </div>
-                <div className="space-y-6 overflow-y-auto">
-                    {renderFields()}
-                </div>
-            </div>
+<div className="fixed inset-0 flex bg-black bg-opacity-50 z-50">
+    <div className="bg-white text-black rounded-lg border border-blue-200 w-full max-w-lg max-h-[90vh] p-6 shadow-lg overflow-y-auto">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold">{nodeLabel} Configuration</h2>
+            <button onClick={handleClose} className="text-gray-400 hover:text-black mt-5">
+                <X size={20} />
+            </button>
         </div>
+        <div className="space-y-6 overflow-y-auto">
+            {renderFields()}
+        </div>
+        {nodeLabel !== "Start Node" && nodeLabel!== "Text Output" && nodeLabel!== "Chat Output"  && (
+            <div
+                onClick={dataSubmit}
+                className="w-full p-2 bg-blue-500 text-center mt-2 rounded-lg text-lg font-semibold"
+            >
+                Submit
+            </div>
+        )}
+    </div>
+</div>
+
     );
 };
 

@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Handle } from "reactflow";
 import { Cpu } from "lucide-react";
-import { useModelConfigStore } from "../store/Mystore";
 
 const ModelNode = ({ data }) => {
+    const [nodeData, setNodeData] = useState(data); // Store data in local state
+
+    useEffect(() => {
+        setNodeData(data); // Update state when data changes
+    }, [data]);
+
     return (
         <div className="bg-white shadow-lg rounded-lg border border-gray-300 p-4 text-gray-800 w-full">
             {/* Header */}
@@ -18,12 +23,12 @@ const ModelNode = ({ data }) => {
 
                 <div className="flex justify-between text-sm">
                     <span className="font-medium text-gray-700">Model:</span>
-                    <span className="text-gray-900">{data.modelName}</span>
+                    <span className="text-gray-900">{nodeData?.modelName ?? "ChatGPT"}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
                     <span className="font-medium text-gray-700">Temperature:</span>
-                    <span className="text-gray-900">{data.temperature}</span>
+                    <span className="text-gray-900">{nodeData?.temperature ?? "0.5"}</span>
                 </div>
             </div>
 

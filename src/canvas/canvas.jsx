@@ -16,7 +16,7 @@ import { ModelNode } from "../CustomNode/ModelNode";
 import ChatInputConfig from "../Input-config/ChatInputConfig";
 import FileUploadForm from "../Input-config/FileConfig";
 import { useWorkflowStore } from "../store/Mystore";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Canvas = () => {
     const navigate = useNavigate();
@@ -207,6 +207,7 @@ const Canvas = () => {
         if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
             setSelectedNode(node);
             setIsModalOpen(true);
+            console.log(selectedNode)
         }
     };
     const handleSettingsChange = useCallback((updatedSettings) => {
@@ -327,6 +328,7 @@ const Canvas = () => {
                         <h2 className="text-lg font-semibold">Configurations</h2>
                         <button onClick={() => setSelectedNode(null)} className="float-right px-2 py-1 bg-gray-200 rounded">X</button>
                         <ModelNodeForm
+                            selectedNode={selectedNode}
                             setSelectedNode={setSelectedNode}
                             setIsModalOpen={setIsModalOpen}
                             onUpdate={(config) => {
@@ -343,9 +345,9 @@ const Canvas = () => {
                 );
             case "customNode":
                 return (
-                    <div className="p-4 border-l border-gray-300">
+                    <div className="p-5 border-l border-gray-300">
                         <ChatInputConfig
-                            setSelectedNode={setSelectedNode}
+                            setSelectedNode={selectedNode}
                             nodeLabel={selectedNode?.data?.label}
                             setIsModalOpen={setIsModalOpen}
                             onSettingsChange={handleSettingsChange}
@@ -505,11 +507,11 @@ const Canvas = () => {
                         </ReactFlow>
                     </div>
                     {selectedNode && isModalOpen && (
-                        <>
-                            {renderConfigForm()}
-                        </>
+    <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
+        {renderConfigForm()}
+    </div>
+)}
 
-                    )}
                 </div>
             </div>
         </>

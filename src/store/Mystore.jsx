@@ -55,7 +55,7 @@ const useWorkflowStore = create(
                                 Text: newData.data.text || newData.data.Text || node.config.Text || "",
                                 store_messages: newData.data.storeMessages || newData.data.store_messages || node.config.store_messages || false,
                                 sessionID: newData.data.sessionId || newData.data.sessionID || node.config.sessionID || "",
-                                files: newData.data.files || node.config.files || "path_to_file"
+                                files: newData.files || node.config.files || ""
                             };
                         }
                         else if (nodeType === "Text Input") {
@@ -127,10 +127,10 @@ const useWorkflowStore = create(
                         config: {
                             // Include model config
                             ...(nodeData.type === "ModelNode" && {
-                                modelName: (nodeData.data && nodeData.data.modelName) || "ChatGpt O-3",
+                                modelName: (nodeData.data && nodeData.data.modelName) || "ChatGPT",
                                 temperature: (nodeData.data && nodeData.data.temperature) || 0.5,
-                                input: (nodeData.data && nodeData.data.input) || "receiving_input",
-                                system_message: (nodeData.data && nodeData.data.system_message) || "system_message",
+                                input: (nodeData.data && nodeData.data.input) || "",
+                                system_message: (nodeData.data && nodeData.data.system_message) || "",
                                 maximum_tokens: (nodeData.data && nodeData.data.maximum_tokens) || 4096,
                                 API_key: (nodeData.data && nodeData.data.API_key) || ""
                             }),
@@ -146,7 +146,7 @@ const useWorkflowStore = create(
                                     (nodeData.data && nodeData.data.sessionID) ||
                                     (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.sessionId) || "",
                                 files: (nodeData.data && nodeData.data.files) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.files) || "path_to_file"
+                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.files) || "path_to_file"
                             }),
                             // Directly store Text property for Text Input
                             ...(nodeData.label === "Text Input" && {
@@ -166,7 +166,6 @@ const useWorkflowStore = create(
                     // Add the new node
                     state.workflows[workflowId].nodes[nodeData.id] = formattedNode;
 
-                    // Update the workflow's updated_at timestamp
                     state.workflows[workflowId].updated_at = new Date().toISOString();
                 }
             })),
