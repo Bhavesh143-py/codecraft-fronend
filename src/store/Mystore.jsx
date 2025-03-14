@@ -127,10 +127,10 @@ const useWorkflowStore = create(
                         config: {
                             // Include model config
                             ...(nodeData.type === "ModelNode" && {
-                                modelName: (nodeData.data && nodeData.data.modelName) || "ChatGpt O-3",
+                                modelName: (nodeData.data && nodeData.data.modelName) || "ChatGPT",
                                 temperature: (nodeData.data && nodeData.data.temperature) || 0.5,
-                                input: (nodeData.data && nodeData.data.input) || "receiving_input",
-                                system_message: (nodeData.data && nodeData.data.system_message) || "system_message",
+                                input: (nodeData.data && nodeData.data.input) || "",
+                                system_message: (nodeData.data && nodeData.data.system_message) || "",
                                 maximum_tokens: (nodeData.data && nodeData.data.maximum_tokens) || 4096,
                                 API_key: (nodeData.data && nodeData.data.API_key) || ""
                             }),
@@ -166,7 +166,6 @@ const useWorkflowStore = create(
                     // Add the new node
                     state.workflows[workflowId].nodes[nodeData.id] = formattedNode;
 
-                    // Update the workflow's updated_at timestamp
                     state.workflows[workflowId].updated_at = new Date().toISOString();
                 }
             })),

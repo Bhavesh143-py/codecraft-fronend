@@ -1,15 +1,21 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useModelConfigStore } from "../store/Mystore";
-const ModelNodeForm = ({ setSelectedNode, onUpdate }) => {
+const ModelNodeForm = ({ selectedNode,setSelectedNode, onUpdate }) => {
     const { setModelConfig } = useModelConfigStore();
-    const [config, setConfig] = useState({
-        modelName: "claude-3-5-sonnet-latest",
-        temperature: 0.1,
-        input: "receiving_input",
-        system_message: "system_message",
+    const defaultConfig = {
+        modelName: "ChatGPT",
+        temperature: 0.5,
+        input: "",
+        system_message: "",
         maximum_tokens: 4096,
         API_key: ""
-    });
+    };
+    const [config, setConfig] = useState(defaultConfig);
+    useEffect(() => {
+        if (selectedNode?.config) {
+            setConfig({ ...defaultConfig, ...selectedNode.config });  // Merge defaults with existing config
+        }
+    }, [selectedNode]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -42,7 +48,7 @@ const ModelNodeForm = ({ setSelectedNode, onUpdate }) => {
                     >
                         <option value="ChatGPT">ChatGPT</option>
                         <option value="Claude">Claude</option>
-                        <option value="Gemini">Gemini</option>
+                        <option value="Mistral">Mistral</option>
                     </select>
                 </div>
 
@@ -66,6 +72,7 @@ const ModelNodeForm = ({ setSelectedNode, onUpdate }) => {
                     <input
                         type="text"
                         name="input"
+                        placeholder="Type something..."
                         value={config.input}
                         onChange={handleChange}
                         className="w-full p-2 border border-gray-600 bg-gray-800 rounded-md text-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -78,6 +85,7 @@ const ModelNodeForm = ({ setSelectedNode, onUpdate }) => {
                     <input
                         type="text"
                         name="system_message"
+                        placeholder="Type some system command..."
                         value={config.system_message}
                         onChange={handleChange}
                         className="w-full p-2 border border-gray-600 bg-gray-800 rounded-md text-white focus:ring-2 focus:ring-blue-500 outline-none"

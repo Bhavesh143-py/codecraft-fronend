@@ -16,7 +16,7 @@ import { ModelNode } from "../CustomNode/ModelNode";
 import ChatInputConfig from "../Input-config/ChatInputConfig";
 import FileUploadForm from "../Input-config/FileConfig";
 import { useWorkflowStore } from "../store/Mystore";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Canvas = () => {
     const navigate = useNavigate();
@@ -328,6 +328,7 @@ const Canvas = () => {
                         <h2 className="text-lg font-semibold">Configurations</h2>
                         <button onClick={() => setSelectedNode(null)} className="float-right px-2 py-1 bg-gray-200 rounded">X</button>
                         <ModelNodeForm
+                            selectedNode={selectedNode}
                             setSelectedNode={setSelectedNode}
                             setIsModalOpen={setIsModalOpen}
                             onUpdate={(config) => {
