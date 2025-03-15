@@ -18,9 +18,7 @@ const useWorkflowStore = create(
                     created_by: workflowData.created_by,
                     nodes: workflowData.nodes || {}, // Store nodes at the top level like in your desired format
                     connections: workflowData.connections || [], // Store connections at the top level
-                    dsl_file: {
-                        ...(workflowData.dsl_file || {}),
-                    },
+                    chatlogs: workflowData.chatlogs || [], // Store chatlogs at the top level
                     status: workflowData.status || 'active',
                     created_at: workflowData.created_at || new Date().toISOString(),
                     updated_at: workflowData.updated_at || new Date().toISOString()
@@ -392,6 +390,10 @@ const useFileInputStore = create((set) => ({
     setFileConfig: (newData) => set((state) => ({
         FileData: { ...state.FileData, ...newData },
     })),
+}));
+const workflowChatlogStore = create((set) => ({
+    chatlog: [{que: "Hello", ans: "Hi"}],
+    setChatlog: (newChatlog) => set({ chatlog: newChatlog }),
 }));
 
 export { useInputNodeStore, useInputPromptStore, useModelConfigStore, workflowCreateStore, useWorkflowStore,useFileInputStore };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import  handleStartworkflow  from "../utilities/Startworkflow";
+
 const NodePalette = ({ onAddNode, onAddFile, onAddModelNode, selectedWorkflowId }) => {
     const [openInputs, setOpenInputs] = useState(false);
     const [openOutputs, setOpenOutputs] = useState(false);
@@ -84,12 +84,7 @@ const NodePalette = ({ onAddNode, onAddFile, onAddModelNode, selectedWorkflowId 
                         LLM Node <span>+</span>
                     </button>
 
-                    <button
-                     onClick={()=>{handleStartworkflow(selectedWorkflowId)}}
-                        className="w-full p-3 text-sm font-bold font-ubuntu rounded-md cursor-pointer flex justify-between items-center bg-[rgb(249,244,244)] text-[rgb(12,12,12)] hover:bg-[#eae5e5] transition-all"
-                    >
-                        Run
-                    </button>
+                    
                 </div>
             )}
         </aside>

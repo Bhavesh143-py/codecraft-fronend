@@ -36,8 +36,7 @@ const ChatInputConfig = ({ setIsModalOpen, onSettingsChange, selectedNode, nodeL
     }
 
     const handleClose = () => {
-        setIsModalOpen(false)
-        setSelectedNode(null);
+        setIsModalOpen(false);
     };
 
     const handleInputChange = (e, key) => {

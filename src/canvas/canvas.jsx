@@ -17,7 +17,7 @@ import ChatInputConfig from "../Input-config/ChatInputConfig";
 import FileUploadForm from "../Input-config/FileConfig";
 import { useWorkflowStore } from "../store/Mystore";
 import { useNavigate } from "react-router-dom";
-
+import ChatComponent from "../utilities/Startworkflow";
 const Canvas = () => {
     const navigate = useNavigate();
     const {
@@ -42,6 +42,7 @@ const Canvas = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedNode, setSelectedNode] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [startworkflowwindow, setstartworkflowwindow] = useState(false);
     const nodeTypes = useMemo(() => ({
         customNode: CustomNode,
         customFile: CustomFile,
@@ -464,6 +465,9 @@ const Canvas = () => {
             alert("An unexpected error occurred while saving the workflow.");
         }
     };
+    const handleCloseWorkflow = () => {
+        setstartworkflowwindow(false);
+    };
 
     return (
         <>
@@ -472,12 +476,16 @@ const Canvas = () => {
                     <h1 className="text-xl font-bold">
                         {workflows[selectedWorkflowId]?.workflow_name || "Workflow Editor"}
                     </h1>
+                    <div className="flex gap-4 items-center justify-end">
                     <button
                         onClick={saveWorkflow}
                         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     >
                         Save Workflow
                     </button>
+                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={()=>setstartworkflowwindow(true)}>Run workflow</button>
+                    </div>
                 </div>
                 <div className="flex flex-1">
                     <NodePalette
@@ -507,10 +515,15 @@ const Canvas = () => {
                         </ReactFlow>
                     </div>
                     {selectedNode && isModalOpen && (
-    <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
-        {renderConfigForm()}
-    </div>
-)}
+                        <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
+                            {renderConfigForm()}
+                        </div>
+                    )}
+                    {startworkflowwindow && (
+                        <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
+                            <ChatComponent workflowId={selectedWorkflowId} startworkflowwindow={startworkflowwindow} onClose={handleCloseWorkflow} />
+                        </div>
+                    )}
 
                 </div>
             </div>
