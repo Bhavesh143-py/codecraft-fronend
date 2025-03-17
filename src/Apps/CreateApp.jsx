@@ -34,9 +34,7 @@ const CreateApp = () => {
             // Initialize with the complete structure
             initializeWorkflow(workflowId, {
                 ...response.data,
-                dsl_file: {
-                    ...(response.data.dsl_file || {})   
-                },
+                
                 nodes:{},
                 connections:[]
             });

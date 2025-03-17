@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { X } from "lucide-react";
+import { X, Loader } from "lucide-react";
 
 const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
-    
+
     const [loading, setLoading] = useState(true);
+    const [sendingMessage, setSendingMessage] = useState(false);
     const [workflowData, setWorkflowData] = useState(null);
     const [error, setError] = useState(null);
     const [inputMessage, setInputMessage] = useState("");
+    const [chatlogs, setchatlogs] = useState([]);
 
     // Automatically start the workflow when the component mounts
     useEffect(() => {
@@ -28,6 +30,8 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
                 hideProgressBar: true,
             });
             setWorkflowData(response.data);
+            // Make sure we're storing a string in the chatlogs array
+            setchatlogs([response.data.Response ? response.data.Response.toString() : "Workflow started"]);
             setError(null);
         } catch (err) {
             console.error("Error starting workflow:", err);
@@ -42,14 +46,57 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
         }
     };
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (inputMessage.trim()) {
-            // Here you would typically send the message to your workflow
-            console.log("Sending message:", inputMessage);
+        if (!inputMessage.trim() || sendingMessage) return;
+
+        // Set loading state
+        setSendingMessage(true);
+
+        // Add user message to chat logs
+        const updatedLogs = [...chatlogs, inputMessage];
+        setchatlogs(updatedLogs);
+
+        try {
+            // Fixed API URL to use query parameter
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL}/workflows${workflowId}/chat/${workflowData.execution_id}?user_chat_message=${encodeURIComponent(inputMessage)}`
+            );
+            console.log("Message sent successfully:", response.data);
+
+            // Extract the message from the response and ensure it's a string
+            let responseMessage;
+            if (typeof response.data === 'object') {
+                // If response.data is an object, try to get the response property
+                responseMessage = response.data.response || response.data.Response || JSON.stringify(response.data);
+            } else {
+                // If it's already a string or other primitive
+                responseMessage = String(response.data);
+            }
+
+            // Add response to chat logs
+            setchatlogs([...updatedLogs, responseMessage]);
+            setError(null);
+        } catch (err) {
+            console.error("Error sending message:", err);
+            setError("Failed to send message. Please try again.");
+        } finally {
             setInputMessage("");
-            // You could add logic here to handle the message in your workflow
+            setSendingMessage(false);
         }
+    };
+
+    // Helper function to safely render message content
+    const renderMessage = (message) => {
+        if (message === null || message === undefined) {
+            return "No message";
+        }
+
+        if (typeof message === 'object') {
+            return JSON.stringify(message);
+        }
+
+        return message;
     };
 
     return (
@@ -90,18 +137,21 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
 
                 {workflowData && !loading && (
                     <div className="space-y-4">
-                        {/* Message */}
+                        {/* Initial Message */}
                         <div className="bg-gray-100 p-3 rounded-md">
-                            <p className="text-sm text-gray-600">{workflowData.message}</p>
+                            <p className="text-sm text-gray-600">
+                                {typeof workflowData.message === 'object'
+                                    ? JSON.stringify(workflowData.message)
+                                    : workflowData.message || "Workflow started"}
+                            </p>
                         </div>
 
-                        {/* Response */}
-                        <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                            <div className="flex items-center mb-2">
-                                <span className="font-medium text-gray-700">Answer :</span>
+                        {/* Chat Logs - Map over all messages */}
+                        {chatlogs.map((message, index) => (
+                            <div key={index} className={`p-4 rounded-md border ${index % 2 === 0 ? "bg-gray-50 border-gray-200 mr-auto max-w-3/4" : "bg-blue-50 border-blue-200 ml-auto max-w-3/4"}`}>
+                                <p className="text-gray-800 whitespace-pre-wrap">{renderMessage(message)}</p>
                             </div>
-                            <p className="text-gray-800 whitespace-pre-wrap">{workflowData.Response}</p>
-                        </div>
+                        ))}
                     </div>
                 )}
             </div>
@@ -114,17 +164,25 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         placeholder="Type your message..."
+                        disabled={sendingMessage}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                         type="submit"
-                        disabled={!inputMessage.trim()}
-                        className={`px-4 py-2 rounded-md ${!inputMessage.trim()
+                        disabled={!inputMessage.trim() || sendingMessage}
+                        className={`px-4 py-2 rounded-md flex items-center justify-center min-w-16 ${!inputMessage.trim() || sendingMessage
                                 ? "bg-gray-300 cursor-not-allowed"
                                 : "bg-blue-500 hover:bg-blue-600 text-white"
                             }`}
                     >
-                        Send
+                        {sendingMessage ? (
+                            <>
+                                <Loader size={16} className="animate-spin mr-2" />
+                                <span>Sending...</span>
+                            </>
+                        ) : (
+                            <span>Send</span>
+                        )}
                     </button>
                 </form>
             </div>
