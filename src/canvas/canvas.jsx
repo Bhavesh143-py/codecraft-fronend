@@ -473,7 +473,7 @@ const Canvas = () => {
         <>
             <div className="flex h-screen flex-col">
                 <div className="flex justify-between items-center p-2 bg-gray-100 border-b">
-                    <h1 className="text-xl font-bold">
+                    <h1 className="text-xl font-bold capitalize">
                         {workflows[selectedWorkflowId]?.workflow_name || "Workflow Editor"}
                     </h1>
                     <div className="flex gap-4 items-center justify-end">
@@ -492,7 +492,6 @@ const Canvas = () => {
                         onAddNode={onAddNode}
                         onAddFile={onAddFile}
                         onAddModelNode={onAddModelNode}
-                        selectedWorkflowId={selectedWorkflowId}
                         className="w-1/4 bg-white border-r border-gray-300 p-2 overflow-y-auto"
                     />
                     <div className="flex-1 relative bg-[#eef9fa]">
