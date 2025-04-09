@@ -48,9 +48,12 @@ const ModelNodeForm = ({ selectedNode, setSelectedNode, onUpdate }) => {
                         onChange={handleChange}
                         className="w-full p-2 border border-slate-400 bg-white rounded-md text-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
-                        <option value="ChatGPT">ChatGPT</option>
-                        <option value="Claude">Claude</option>
-                        <option value="Mistral">Mistral</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4.0-mini">gpt-4.0-mini</option>
+                        <option value="mistral-small">mistral-small</option>
+                        <option value="mistral-nemo">mistral-nemo</option>
+                        <option value="mistral-large">mistral-large</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                     </select>
                 </div>
 

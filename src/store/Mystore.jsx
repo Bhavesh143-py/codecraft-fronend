@@ -100,7 +100,8 @@ const useWorkflowStore = create(
 
                     // First check by node ID pattern
                     if (nodeData.id.startsWith('model_')) {
-                        nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+                        // nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+                        nodeType = "LLM";  //sets node type to LLM. earlier, it was saved as the name of the model selected from the dropdown menu.
                     } else if (nodeData.id.startsWith('file_')) {
                         nodeType = "File";
                     } else if (nodeData.type === "ModelNode") {
