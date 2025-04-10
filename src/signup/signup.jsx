@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import loginImg from "../assets/Login.svg";
+import loginImg from "../assets/Login.svg";
 
 export default function SignUp() {
   const [userId, setUserId] = useState("");
@@ -90,11 +90,11 @@ export default function SignUp() {
 
           {/* Right - Illustration */}
           <div className="w-full md:w-1/2 p-10 flex items-center justify-center bg-transparent" style={fadeInStyle("0.6s")}>
-            {/* <img
+            <img
               src={loginImg}
               alt="Login Illustration"
               className="w-80 max-w-full drop-shadow-2xl"
-            /> */}
+            />
           </div>
         </div>
       </div>

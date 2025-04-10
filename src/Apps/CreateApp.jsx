@@ -4,8 +4,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useWorkflowStore, workflowCreateStore } from "../store/Mystore";
 import axios from "axios";
-// import appImg from "../assets/create.svg";
-// import congratulation from "../assets/congratulation.png"
+import appImg from "../assets/create.svg";
+import congratulation from "../assets/congratulation.png"
 
 
 const CreateApp = () => {
@@ -115,11 +115,11 @@ const CreateApp = () => {
 
     {/* Right: Image */}
     <div className="w-full md:w-1/2 p-10 flex items-center justify-center bg-transparent">
-      {/* <img
+      <img
         src={congratulation}
         alt="App Illustration"
         className="w-fit max-w-full drop-shadow-2xl animate-fade-in-up"
-      /> */}
+      />
     </div>
   </div>
 ) : (
@@ -177,7 +177,7 @@ const CreateApp = () => {
   
             {/* Right: Illustration */}
             <div className="w-full md:w-1/2 p-10 flex items-center justify-center bg-transparent" style={fadeInStyle("0.6s")}>
-              {/* <img src={appImg} alt="App Illustration" className="w-80 max-w-full drop-shadow-2xl" /> */}
+              <img src={appImg} alt="App Illustration" className="w-80 max-w-full drop-shadow-2xl" />
             </div>
           </div>
         )}
