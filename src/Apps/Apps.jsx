@@ -2,8 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import img from "../assets/imges5.png";
 import { motion } from 'framer-motion';
+import AppCard from './Appcard';
 import { ChevronLeft, ChevronRight, MoreVertical, Plus, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { useWorkflowStore } from "../store/Mystore";
+
 
 export default function Apps() {
   const [activeTab, setActiveTab] = useState('All');
@@ -17,6 +20,7 @@ export default function Apps() {
   const buttonRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const { initializeWorkflow, selectWorkflow } = useWorkflowStore();
 
   const fetchWorkflows = async () => {
     try {
@@ -31,6 +35,56 @@ export default function Apps() {
   useEffect(() => {
     fetchWorkflows();
   }, []);
+  const handleDeleteApp = async (workflowId) => {
+    try {
+      // Replace with your actual API endpoint for deleting workflows
+      await axios.delete(`${import.meta.env.VITE_API_URL}/workflows/${workflowId}`);
+      alert("App deleted successfully");
+      setCardData(prevData => prevData.filter(item =>
+        (item.id !== workflowId && item.workflow_id !== workflowId)
+      ));
+    } catch (error) {
+      console.error("Error deleting workflow:", error);
+      alert("Failed to delete the app. Please try again.");
+    }
+  };
+  const handleWorkflowClick = (workflowId) => {
+    try {
+      axios.get(`${import.meta.env.VITE_API_URL}/workflows/${workflowId}`)
+        .then(response => {
+          const workflowData = response.data;
+
+          // Extract the detailed workflow structure from dsl_file
+          // If any required fields are missing, initialize them
+          const formattedWorkflow = {
+            workflow_id: workflowData.workflow_id,
+            workflow_name: workflowData.workflow_name,
+            description: workflowData.description,
+            created_by: workflowData.created_by,
+            nodes: workflowData.dsl_file?.nodes || {},
+            connections: workflowData.dsl_file?.connections || [],
+            chatlogs: workflowData.dsl_file?.chatlogs || [],
+            status: workflowData.status || 'active',
+            created_at: workflowData.created_at,
+            updated_at: workflowData.updated_at
+          };
+
+          // Initialize in store
+          initializeWorkflow(workflowData.workflow_id, formattedWorkflow);
+
+          // Set as selected workflow
+          selectWorkflow(workflowId);
+
+          // Navigate to canvas
+          navigate('/canvas');
+        })
+        .catch(error => {
+          console.error("Error fetching workflow:", error);
+        });
+    } catch (error) {
+      console.error("Error fetching workflow:", error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -73,7 +127,7 @@ export default function Apps() {
 
   return (
     <div className="w-full min-h-full" style={{ background: 'radial-gradient(circle at 20% 20%, #1a1d2b, #0f111a)' }}>
-      
+
       {/* Navbar */}
       <nav className="w-full px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between font-sans gap-4">
         <h1 className="text-7xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#12f4b7] to-[#05a8ed] bg-clip-text text-transparent tracking-wider drop-shadow-md font-ubuntu animate-pulse">
@@ -171,11 +225,10 @@ export default function Apps() {
           <div className="flex space-x-4">
             <button
               onClick={() => handleTabClick('All')}
-              className={`${
-                activeTab === 'All'
+              className={`${activeTab === 'All'
                   ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-lg'
                   : 'bg-white text-gray-800 border border-gray-300 hover:border-blue-500 hover:bg-blue-500 hover:text-white'
-              } py-2 px-6 rounded-full transition-all duration-300 font-ubuntu`}
+                } py-2 px-6 rounded-full transition-all duration-300 font-ubuntu`}
             >
               All
             </button>
@@ -194,35 +247,20 @@ export default function Apps() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6">
           {paginatedData.length === 0
             ? Array.from({ length: 10 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="relative bg-[#1f2937]/60 border border-white/10 backdrop-blur-lg p-5 rounded-2xl shadow-lg flex justify-center items-center text-white min-h-[150px]"
-                >
-                  {idx === 2 && (
-                    <p className="text-base font-semibold text-gray-400 text-center">
-                      No App Found
-                    </p>
-                  )}
-                </div>
-              ))
+              <div
+                key={idx}
+                className="relative bg-[#1f2937]/60 border border-white/10 backdrop-blur-lg p-5 rounded-2xl shadow-lg flex justify-center items-center text-white min-h-[150px]"
+              >
+                {idx === 2 && (
+                  <p className="text-base font-semibold text-gray-400 text-center">
+                    No App Found
+                  </p>
+                )}
+              </div>
+            ))
             : paginatedData.map((card, index) => (
-                <div
-                  key={index}
-                  className="relative bg-[#1f2937]/60 border border-white/10 backdrop-blur-lg p-5 rounded-2xl shadow-lg hover:shadow-blue-500/30 hover:scale-[1.03] transition-all duration-300 flex flex-col justify-between text-white min-h-[150px]"
-                >
-                  <div className="absolute top-3 right-3">
-                    <button className="text-gray-400 hover:text-white transition">
-                      <MoreVertical size={20} />
-                    </button>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <h2 className="text-lg font-bold text-white">{card.workflow_name}</h2>
-                    <p className="text-sm text-gray-300 leading-relaxed line-clamp-3">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              <AppCard card={card} index={index} onDelete={handleDeleteApp} GetWorkflow={handleWorkflowClick} />
+            ))}
         </div>
 
         {/* Pagination */}
