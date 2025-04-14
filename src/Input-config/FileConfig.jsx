@@ -5,17 +5,22 @@ import { useWorkflowStore } from "../store/Mystore";
 
 const FileUploadForm = ({ setIsModalOpen, onFileUpdate, selectedNode, setSelectedNode }) => {
     const selectedWorkflowId = useWorkflowStore((state) => state.selectedWorkflowId);
+    const workflows = useWorkflowStore((state) => state.workflows);
     const [isFileUploading, setIsFileUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
     const [fileName, setFileName] = useState("");
 
     // Initialize settings from selected node when component mounts or selected node changes
     useEffect(() => {
-        if (selectedNode?.data?.config?.filename) {
-            setFileName(selectedNode.data.config.filename);
-        }
-    }, [selectedNode]);
+        if (selectedNode && selectedWorkflowId && workflows[selectedWorkflowId]) {
+            const nodeId = selectedNode.id;
+            const workflowNode = workflows[selectedWorkflowId].nodes[nodeId];
 
+            if (workflowNode && workflowNode.config && workflowNode.config.filename) {
+                setFileName(workflowNode.config.filename);
+            }
+        }
+    }, [selectedNode, selectedWorkflowId, workflows]);
     const handleClose = () => {
         setIsModalOpen(false);
         setSelectedNode(null);
@@ -28,7 +33,7 @@ const FileUploadForm = ({ setIsModalOpen, onFileUpdate, selectedNode, setSelecte
 
         setIsFileUploading(true);
         setUploadError(null);
-        setFileName(file.name);
+        
 
         try {
             const formData = new FormData();
@@ -53,12 +58,6 @@ const FileUploadForm = ({ setIsModalOpen, onFileUpdate, selectedNode, setSelecte
                 const fileConfig = {
                     filename: file.name,
                     label: file.name,
-                    // This data structure matches what the store expects
-                    data: {
-                        config: {
-                            filename: file.name
-                        }
-                    },
                     type: "File"
                 };
 
