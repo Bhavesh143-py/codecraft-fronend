@@ -154,10 +154,7 @@ const useWorkflowStore = create(
                                     (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "hi",
                             }),
                             ...(nodeData.type === "customFile" && {
-                                filepath: nodeData.data?.filepath || "",
-                                fileText: nodeData.data?.fileText || "",
-                                fileBase64: nodeData.data?.fileBase64 || "",
-                                fileType: nodeData.data?.fileType || ""
+                                filename: (nodeData.data && nodeData.data.filename) || " ",
                             })
                         },
                     };
