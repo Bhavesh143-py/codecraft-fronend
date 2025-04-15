@@ -31,7 +31,7 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
             });
             setWorkflowData(response.data);
             // Make sure we're storing a string in the chatlogs array
-            setchatlogs([response.data.Response ? response.data.Response.toString() : "Workflow started"]);
+            setchatlogs([response.data ? response.data.Response.response.toString() : "Workflow started"]);
             setError(null);
         } catch (err) {
             console.error("Error starting workflow:", err);
@@ -68,7 +68,7 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
             let responseMessage;
             if (typeof response.data === 'object') {
                 // If response.data is an object, try to get the response property
-                responseMessage = response.data.response || response.data.Response || JSON.stringify(response.data);
+                responseMessage = response.data.response || response.data.Response.response || JSON.stringify(response.data);
             } else {
                 // If it's already a string or other primitive
                 responseMessage = String(response.data);
