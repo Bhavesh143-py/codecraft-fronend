@@ -155,6 +155,8 @@ const useWorkflowStore = create(
                             }),
                             ...(nodeData.type === "customFile" && {
                                 filename: (nodeData.data && nodeData.data.filename) || " ",
+                                fileBase64: (nodeData.data && nodeData.data.fileBase64) || " ",
+                                fileText: (nodeData.data && nodeData.data.fileText) || " ",
                             })
                         },
                     };
