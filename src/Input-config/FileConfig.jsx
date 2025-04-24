@@ -57,7 +57,7 @@ const FileUploadForm = ({ setIsModalOpen, onFileUpdate, selectedNode, setSelecte
                 // For ReactFlow node UI update
                 const fileConfig = {
                     filename: file.name,
-                    fileBase64: response.data.fileBase64[0],
+                    fileBase64: response.data.fileBase64,
                     label: file.name,
                     type: "File"
                 };
