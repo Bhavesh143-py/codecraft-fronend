@@ -72,10 +72,10 @@ const NodePalette = ({ onAddNode, onAddFile, onAddModelNode }) => {
                       if (node.label === "File Upload") {
                         onAddFile(node.label);
                       } else {
-                        onAddModelNode(node.label);
+                        onAddModelNode(node);
                       }
                     } else {
-                      onAddNode(node.label);
+                      onAddNode(node);
                     }
                   }}
                 >

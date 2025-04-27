@@ -1,160 +1,149 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Handle } from "reactflow";
 import { Eye, RefreshCw, MessageSquare } from "lucide-react";
+import axios from "axios";
+
+// Utility to parse API config response
+const parseConfig = (configArray) => {
+  return configArray.flat().map((entry) => {
+    const [label, type] = entry.split(" : ").map((s) => s.trim());
+    return { label, type };
+  });
+};
 
 const CustomNode = ({ data }) => {
-  const { label, chatSettings = {}, onUpdate } = data || {};
+  console.log(data)
+  const { label, nodeId, onUpdate, chatSettings } = data || {};
 
-  // State initialization with chatSettings fallback values
-  const [inputValue, setInputValue] = useState(chatSettings.text || "");
-  const [sessionId, setSessionId] = useState(chatSettings.sessionId || "");
-  const [isToggled, setIsToggled] = useState(chatSettings.storeMessages || false);
-  const [showText, setShowText] = useState(chatSettings.showText ?? true);
-  const [uploadedFile, setUploadedFile] = useState(chatSettings.files || null);
-
-  // Sync state with chatSettings changes
-  useEffect(() => {
-    setInputValue(chatSettings.text || "");
-    setSessionId(chatSettings.sessionId || "");
-    setIsToggled(chatSettings.storeMessages || false);
-    setShowText(chatSettings.showText ?? true);
-    setUploadedFile(chatSettings.files || null);
-  }, [chatSettings]);
-
-  // Function to update chatSettings and reflect in parent component
-  const updateNodeData = (updatedSettings) => {
-    if (onUpdate) {
-      onUpdate({
-        ...chatSettings, // Keep existing values
-        ...updatedSettings, // Update changed values
-      });
-    }
-  };
-
-
-
-
-
-
-
-  // Input handlers
-  const handleInputChange = (event) => {
-    const newValue = event.target.value;
-    chatSettings.text = event.target.value;
-    setInputValue(newValue);
-    updateNodeData({ text: newValue });
-  };
-
-  const handleSessionId = (event) => {
-    const newSessionId = event.target.value;
-    chatSettings.sessionId = event.target.value;
-    setSessionId(newSessionId);
-    updateNodeData({ sessionId: newSessionId });
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    chatSettings.files=event.target.files[0]
-    setUploadedFile(file);
-    updateNodeData({ files: file });
-  };
-
-  const handleStoreToggle = () => {
-    const newToggleState = !isToggled;
-    chatSettings.storeMessages = newToggleState;
-    setIsToggled(newToggleState);
-    updateNodeData({ storeMessages: newToggleState });
-  };
+  const [fields, setFields] = useState([]);
+  const [fieldValues, setFieldValues] = useState({});
+  const [uploadedFile, setUploadedFile] = useState(null);
 
   const isStartNode = label === "Start Node";
 
+  // Fetch config and initialize field values
+  useEffect(() => {
+    if (nodeId) {
+      axios
+        .get(`${import.meta.env.VITE_API_URL}/asset_configs`, {
+          params: { node_id: nodeId },
+        })
+        .then((res) => {
+          const parsedFields = parseConfig(res.data);
+          setFields(parsedFields);
+  
+          const initialValues = {};
+          parsedFields.forEach(({ label }) => {
+            initialValues[label] = chatSettings?.[label] ?? data?.[label] ?? "";
+
+          });
+  
+          setFieldValues(initialValues);
+  
+          if (onUpdate) onUpdate(initialValues);
+        })
+        .catch((err) => {
+          console.error("Error fetching node config:", err);
+        });
+    }
+  }, [nodeId, chatSettings]);
+  
+
+  // Handle text/checkbox field changes
+  const handleFieldChange = (label, value) => {
+    const updated = { ...fieldValues, [label]: value };
+    setFieldValues(updated);
+    if (chatSettings) chatSettings[label] = value;
+    if (onUpdate) onUpdate(updated);
+  };
+
+
+  // Handle file upload
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setUploadedFile(file);
+    if (onUpdate) onUpdate({ ...fieldValues, file });
+  };
+
+
   return (
-    <div className="w-[180px] bg-white text-[#0b0b0b] rounded-[12px] border border-[#c0e7fe] overflow-hidden text-center shadow-lg">
+    <div className="w-[200px] bg-white text-[#0b0b0b] rounded-[12px] border border-[#c0e7fe] overflow-hidden text-center shadow-lg">
       {/* Header */}
       <div className="flex bg-[#f5f1f1] p-[4px] rounded-t-[12px]">
         <MessageSquare className="bg-[#f2f9fa] p-[4px] rounded-[4px] h-[18px]" />
         <h5 className="text-[10px] font-ubuntu flex-1 text-start ml-2 mt-0.5">{label}</h5>
       </div>
 
-      {/* Node Content */}
+      {/* Dynamic Fields */}
       {!isStartNode && (
-        <div className="p-2">
-          {/* Text Input */}
-          {showText && (
-            <div>
-              <label htmlFor="chat-input-text" className="block text-xs text-[#0b0b0b] mb-[6px] text-left">
-                Text
-              </label>
-              <input
-                id="chat-input-text"
-                type="text"
-                value={inputValue}
-                onChange={handleInputChange}
-                placeholder="Type something..."
-                className="w-full rounded-md border border-[#e4eaed] p-2 text-[8px] h-6 placeholder-[#aaa] focus:outline-none focus:border-[#22b1f8]"
-              />
-            </div>
-          )}
+        <div className="">
+          {fields.map(({ label, type }, idx) => {
+            const key = `field-${idx}`;
 
-          {/* Store Message Toggle */}
-          {chatSettings.showStoreMessages && (
-            <div className="mt-2 flex justify-between items-center">
-              <label htmlFor="store-message" className="text-xs text-[#0b0b0b]">Store Message</label>
-              <label className="relative inline-block w-6 h-3">
-                <input type="checkbox" checked={isToggled} onChange={handleStoreToggle} className="opacity-0 w-0 h-0 absolute" />
-                <span className={`block w-full h-full rounded-full cursor-pointer transition-all duration-300 ${isToggled ? "bg-[#12f4b7]" : "bg-gray-600"}`}>
-                  <span className={`block w-3 h-3 bg-white rounded-full transition-transform duration-300 ${isToggled ? "transform translate-x-3" : "transform translate-x-0"}`}></span>
-                </span>
-              </label>
-            </div>
-          )}
+            if (type === "textbox") {
+              return (
+                <div key={key} className="mb-2 p-2">
+                  <label className="block text-xs text-left mb-1">{label}</label>
+                  <input
+                    type="text"
+                    value={fieldValues[label] ?? ""}
+                    onChange={(e) => handleFieldChange(label, e.target.value)}
+                    placeholder={`Enter ${label.toLowerCase()}`}
+                    className="w-full border border-[#e4eaed] p-2 text-[10px] rounded-md placeholder-[#aaa] focus:outline-none focus:border-[#22b1f8]"
+                  />
+                </div>
+              );
+            }
 
-          {/* File Upload */}
-          {chatSettings.showUploadFile && (
-            <div className="mt-3">
-              <label htmlFor="file-upload" className="block text-xs text-[#0b0b0b] mb-[6px] text-left">
-                Upload File
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                onChange={handleFileChange}
-                className="w-full rounded-md border border-[#e4eaed] p-2 text-xs placeholder-[#aaa] focus:outline-none focus:border-[#22b1f8]"
-              />
-              {uploadedFile && <p className="mt-2 text-xs text-[#0b0b0b]">Uploaded File: {uploadedFile.name}</p>}
-            </div>
-          )}
+            if (type === "file") {
+              return (
+                <div key={key} className="mb-2">
+                  <label className="block text-xs text-left mb-1">{label}</label>
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    className="w-full border border-[#e4eaed] p-2 text-[10px] rounded-md"
+                  />
+                  {uploadedFile && (
+                    <p className="text-[10px] text-left mt-1 text-[#0b0b0b]">
+                      Uploaded File: {uploadedFile.name}
+                    </p>
+                  )}
+                </div>
+              );
+            }
 
-          {/* Session ID */}
-          {chatSettings.showSessionId && (
-            <div className="mt-3">
-              <label htmlFor="chat-input-session" className="block text-xs text-[#0b0b0b] mb-[6px] text-left">
-                Session Id
-              </label>
-              <input
-                id="chat-input-session"
-                type="text"
-                value={sessionId}
-                onChange={handleSessionId}
-                placeholder="Enter session ID..."
-                className="w-full rounded-md border border-[#e4eaed] p-2 text-xs placeholder-[#aaa] focus:outline-none focus:border-[#22b1f8]"
-              />
-            </div>
-          )}
+            if (type === "checkbox") {
+              return (
+                <div key={key} className="flex justify-between items-center mb-2">
+                  <label className="text-xs text-left">{label}</label>
+                  <input
+                    type="checkbox"
+                    checked={!!fieldValues[label]}
+                    onChange={(e) => handleFieldChange(label, e.target.checked)}
+                  />
+                </div>
+              );
+            }
+
+            return null;
+          })}
         </div>
       )}
 
-      {/* Footer with Icons */}
+      {/* Footer Icons */}
       {!isStartNode && (
-        <div className="flex justify-between items-center bg-[#f5f1f1] text-xs rounded-b-[12px] mt-2 border-t border-[#eae5e5] p-2 h-8">
+        <div className="flex justify-between items-center bg-[#f5f1f1] text-xs rounded-b-[12px]  border-t border-[#eae5e5] p-2 h-8">
           <Eye className="cursor-pointer text-[#22b1f8] m-1 w-[16px]" />
           <button className="bg-none border-none text-[#22b1f8] cursor-pointer">Message</button>
           <RefreshCw className="cursor-pointer text-[#22b1f8] m-1 w-[16px]" />
         </div>
       )}
 
-      {/* Connection Points */}
-      {!isStartNode && <Handle type="target" position="left" className="bg-[#22b1f8] w-[6px] h-[10px]" />}
+      {/* React Flow Handles */}
+      {!isStartNode && (
+        <Handle type="target" position="left" className="bg-[#22b1f8] w-[6px] h-[10px]" />
+      )}
       <Handle type="source" position="right" className="bg-[#22b1f8] w-[8px] h-[8px]" />
     </div>
   );
