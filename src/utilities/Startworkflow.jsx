@@ -58,11 +58,14 @@ const ChatComponent = ({ workflowId, startworkflowwindow, onClose }) => {
         setchatlogs(updatedLogs);
 
         try {
+            console.log("API URL:", `${import.meta.env.VITE_API_URL}/workflows/${workflowId}/chat/${workflowData.execution_id}`);
+            console.log("Input Message:", inputMessage);
             // Fixed API URL to use query parameter
             const response = await axios.post(
-                `${import.meta.env.VITE_API_URL}/workflows${workflowId}/chat/${workflowData.execution_id}?user_chat_message=${encodeURIComponent(inputMessage)}`
+                `${import.meta.env.VITE_API_URL}/workflows/${workflowId}/chat/${workflowData.execution_id}`,
+                {user_message : inputMessage} // Sending the message in the request body
             );
-            console.log("Message sent successfully:", response.data);
+            console.log("Message sent successfully:", response.data.response);
 
             // Extract the message from the response and ensure it's a string
             let responseMessage;
