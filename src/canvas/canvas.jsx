@@ -114,6 +114,7 @@ const Canvas = () => {
         }
     }, [selectedWorkflowId]);
 
+    
     // Remove the setTimeout in handleNodesChange and handleEdgesChange
     const handleNodesChange = useCallback((changes) => {
         // Look for node removals in the changes
@@ -242,14 +243,17 @@ const Canvas = () => {
     }, [selectedNode, setNodes]);
     // Add a new node to the canvas and store it
     const onAddNode = (nodeLabel) => {
+        console.log(nodeLabel)
         const newNodeId = `node_${Date.now()}`;
         const newNode = {
             id: newNodeId,
             type: "customNode",
             position: { x: 400, y: 300 },
+            nodeId:nodeLabel.node_id,
             data: {
-                label: nodeLabel,
+                label: nodeLabel.label,
                 chatSettings: { showSenderName: true, showSessionId: false },
+                nodeId:nodeLabel.node_id
             },
         };
 
@@ -295,7 +299,8 @@ const Canvas = () => {
             id: newNodeId,
             type: "ModelNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel, model: true },
+            data: { label: nodeLabel.label, model: true ,nodeId:nodeLabel.node_id,chatSettings: { showSenderName: true, showSessionId: false },},
+            
         };
 
         setNodes((nds) => nds.concat(newNode));
@@ -325,9 +330,9 @@ const Canvas = () => {
         switch (selectedNode.type) {
             case "ModelNode":
                 return (
-                    <div className="p-4 border-l border-gray-300">
-                        <h2 className="text-lg font-semibold">Configurations</h2>
-                        <button onClick={() => setSelectedNode(null)} className="float-right px-2 py-1 bg-gray-200 rounded">X</button>
+                    <div>
+                        {/* <h2 className="text-lg font-semibold">Configurations</h2> */}
+                        <button onClick={() => setSelectedNode(null)} className="float-right px-3 py-4 mt-5 mr-3 rounded">X</button>
                         <ModelNodeForm
                             selectedNode={selectedNode}
                             setSelectedNode={setSelectedNode}

@@ -87,86 +87,169 @@ const useWorkflowStore = create(
                 }
             })),
 
+            // addNode: (nodeData) => set(produce(state => {
+            //     const workflowId = state.selectedWorkflowId;
+            //     if (workflowId && state.workflows[workflowId]) {
+            //         // Ensure nodes object exists
+            //         if (!state.workflows[workflowId].nodes) {
+            //             state.workflows[workflowId].nodes = {};
+            //         }
+
+            //         // Determine the correct node type
+            //         let nodeType;
+
+            //         // First check by node ID pattern
+            //         if (nodeData.id.startsWith('model_')) {
+            //             // nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+            //             nodeType = "LLM";  //sets node type to LLM. earlier, it was saved as the name of the model selected from the dropdown menu.
+            //         } else if (nodeData.id.startsWith('file_')) {
+            //             nodeType = "File";
+            //         } else if (nodeData.type === "ModelNode") {
+            //             // If it's explicitly a ModelNode type
+            //             nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
+            //         } else {
+            //             // Otherwise use the label or fall back to a mapping
+            //             nodeType = nodeData.label === "Chat Input" ? "Chat Input" :
+            //                 nodeData.label === "Text Input" ? "Text Input" :
+            //                     nodeData.label === "Start Node" ? "Start Node" :
+            //                         nodeData.label === "Chat Output" ? "Chat Output" :
+            //                             nodeData.label === "Text Output" ? "Text Output" :
+            //                                 nodeData.type === "customFile" ? "File" :
+            //                                     "customNode"; // Default type
+            //         }
+
+            //         // Format the node to match your desired structure
+            //         const formattedNode = {
+            //             type: nodeType,
+            //             id: nodeData.id,
+            //             position: nodeData.position || { x: 0, y: 0 },
+            //             config: {
+            //                 // Include model config
+            //                 ...(nodeData.type === "ModelNode" && {
+            //                     modelName: (nodeData.data && nodeData.data.modelName) || "ChatGPT",
+            //                     temperature: (nodeData.data && nodeData.data.temperature) || 0.5,
+            //                     input: (nodeData.data && nodeData.data.input) || "",
+            //                     system_message: (nodeData.data && nodeData.data.system_message) || "",
+            //                     maximum_tokens: (nodeData.data && nodeData.data.maximum_tokens) || 4096,
+            //                     API_key: (nodeData.data && nodeData.data.API_key) || ""
+            //                 }),
+            //                 // Directly store Text properties for Chat Input instead of nesting under chatSettings
+            //                 ...(nodeData.label === "Chat Input" && {
+            //                     Text: (nodeData.data && nodeData.data.text) ||
+            //                         (nodeData.data && nodeData.data.Text) ||
+            //                         (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "",
+            //                     store_messages: (nodeData.data && nodeData.data.storeMessages) ||
+            //                         (nodeData.data && nodeData.data.store_messages) ||
+            //                         (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.storeMessages) || false,
+            //                     sessionID: (nodeData.data && nodeData.data.sessionId) ||
+            //                         (nodeData.data && nodeData.data.sessionID) ||
+            //                         (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.sessionId) || "",
+            //                     files: (nodeData.data && nodeData.data.files) ||
+            //                         (nodeData.data && nodeData.data.chatSettings && nodeData.data.files) || "path_to_file"
+            //                 }),
+            //                 // Directly store Text property for Text Input
+            //                 ...(nodeData.label === "Text Input" && {
+            //                     Text: (nodeData.data && nodeData.data.text) ||
+            //                         (nodeData.data && nodeData.data.Text) ||
+            //                         (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "hi",
+            //                 }),
+            //                 ...(nodeData.type === "customFile" && {
+            //                     filepath: nodeData.data?.filepath || "",
+            //                     fileText: nodeData.data?.fileText || "",
+            //                     fileBase64: nodeData.data?.fileBase64 || "",
+            //                     fileType: nodeData.data?.fileType || ""
+            //                 })
+            //             },
+            //         };
+
+            //         // Add the new node
+            //         state.workflows[workflowId].nodes[nodeData.id] = formattedNode;
+
+            //         state.workflows[workflowId].updated_at = new Date().toISOString();
+            //     }
+            // })),
+            
+
             addNode: (nodeData) => set(produce(state => {
+                console.log(nodeData)
                 const workflowId = state.selectedWorkflowId;
                 if (workflowId && state.workflows[workflowId]) {
-                    // Ensure nodes object exists
                     if (!state.workflows[workflowId].nodes) {
                         state.workflows[workflowId].nodes = {};
                     }
-
-                    // Determine the correct node type
+            
                     let nodeType;
-
-                    // First check by node ID pattern
+            
                     if (nodeData.id.startsWith('model_')) {
-                        // nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
-                        nodeType = "LLM";  //sets node type to LLM. earlier, it was saved as the name of the model selected from the dropdown menu.
+                        nodeType = "LLM";
                     } else if (nodeData.id.startsWith('file_')) {
                         nodeType = "File";
                     } else if (nodeData.type === "ModelNode") {
-                        // If it's explicitly a ModelNode type
                         nodeType = nodeData.data && nodeData.data.modelName ? nodeData.data.modelName : "ModelNode";
                     } else {
-                        // Otherwise use the label or fall back to a mapping
-                        nodeType = nodeData.label === "Chat Input" ? "Chat Input" :
+                        nodeType =
+                            nodeData.label === "Chat Input" ? "Chat Input" :
                             nodeData.label === "Text Input" ? "Text Input" :
-                                nodeData.label === "Start Node" ? "Start Node" :
-                                    nodeData.label === "Chat Output" ? "Chat Output" :
-                                        nodeData.label === "Text Output" ? "Text Output" :
-                                            nodeData.type === "customFile" ? "File" :
-                                                "customNode"; // Default type
+                            nodeData.label === "Start Node" ? "Start Node" :
+                            nodeData.label === "Chat Output" ? "Chat Output" :
+                            nodeData.label === "Text Output" ? "Text Output" :
+                            nodeData.type === "customFile" ? "File" :
+                            "customNode";
                     }
-
-                    // Format the node to match your desired structure
+            
                     const formattedNode = {
                         type: nodeType,
                         id: nodeData.id,
                         position: nodeData.position || { x: 0, y: 0 },
                         config: {
-                            // Include model config
                             ...(nodeData.type === "ModelNode" && {
-                                modelName: (nodeData.data && nodeData.data.modelName) || "ChatGPT",
-                                temperature: (nodeData.data && nodeData.data.temperature) || 0.5,
-                                input: (nodeData.data && nodeData.data.input) || "",
-                                system_message: (nodeData.data && nodeData.data.system_message) || "",
-                                maximum_tokens: (nodeData.data && nodeData.data.maximum_tokens) || 4096,
-                                API_key: (nodeData.data && nodeData.data.API_key) || ""
+                                "Model Name": nodeData.data?.["Model Name"] || "ChatGPT",
+                                temperature: nodeData.data?.temperature || 0.5,
+                                maximum_tokens: nodeData.data?.maximum_tokens || 4096,
+                                "user prompt": nodeData.data?.["user prompt"] || "",
+                                "system prompt": nodeData.data?.["system prompt"] || "",
+                                "API KEY": nodeData.data?.["API KEY"] || "",
+                                "nodeId":nodeData.data.nodeId || ""
                             }),
-                            // Directly store Text properties for Chat Input instead of nesting under chatSettings
                             ...(nodeData.label === "Chat Input" && {
-                                Text: (nodeData.data && nodeData.data.text) ||
-                                    (nodeData.data && nodeData.data.Text) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "",
-                                store_messages: (nodeData.data && nodeData.data.storeMessages) ||
-                                    (nodeData.data && nodeData.data.store_messages) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.storeMessages) || false,
-                                sessionID: (nodeData.data && nodeData.data.sessionId) ||
-                                    (nodeData.data && nodeData.data.sessionID) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.sessionId) || "",
-                                files: (nodeData.data && nodeData.data.files) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.files) || "path_to_file"
+                                Text: nodeData.data?.text ||
+                                      nodeData.data?.Text ||
+                                      nodeData.data?.chatSettings?.Text || "",
+                                nodeId:nodeData.data.nodeId || ""
+
+
+                                // store_messages: nodeData.data?.storeMessages ||
+                                //                 nodeData.data?.store_messages ||
+                                //                 nodeData.data?.chatSettings?.storeMessages || false,
+                                // sessionID: nodeData.data?.sessionId ||
+                                //            nodeData.data?.sessionID ||
+                                //            nodeData.data?.chatSettings?.sessionId || "",
+                                // files: nodeData.data?.files ||
+                                //        nodeData.data?.chatSettings?.files || "path_to_file"
                             }),
-                            // Directly store Text property for Text Input
                             ...(nodeData.label === "Text Input" && {
-                                Text: (nodeData.data && nodeData.data.text) ||
-                                    (nodeData.data && nodeData.data.Text) ||
-                                    (nodeData.data && nodeData.data.chatSettings && nodeData.data.chatSettings.text) || "hi",
+                                Text: nodeData.data?.text ||
+                                      nodeData.data?.Text ||
+                                      nodeData.data?.chatSettings?.text || "hi",
+                                nodeId:nodeData.data.nodeId || ""
                             }),
                             ...(nodeData.type === "customFile" && {
                                 filename: (nodeData.data && nodeData.data.filename) || " ",
                                 fileBase64: (nodeData.data && nodeData.data.fileBase64) || " ",
                                 fileText: (nodeData.data && nodeData.data.fileText) || " ",
                             })
-                        },
+                        }
                     };
-
-                    // Add the new node
+            
                     state.workflows[workflowId].nodes[nodeData.id] = formattedNode;
-
                     state.workflows[workflowId].updated_at = new Date().toISOString();
                 }
             })),
+            
+            
+            
+            
+            
             removeNode: (nodeId) => set(produce(state => {
                 const workflowId = state.selectedWorkflowId;
                 if (workflowId && state.workflows[workflowId]?.nodes) {
@@ -368,19 +451,40 @@ const useInputPromptStore = create((set) => ({
     setInputPrompt: (inputprompt) => set({ inputprompt }),
 }));
 
+
+// const useModelConfigStore = create((set) => ({
+//     Modelconfig: {
+//         modelName: "ChatGPT",
+//         input: "",
+//         system_message: "",
+//         temperature: 0.5,
+//         maximum_tokens: 0,
+//         API_key: "",
+//     },
+//     setModelConfig: (newConfig) => set((state) => ({
+//         Modelconfig: { ...state.Modelconfig, ...newConfig }
+//     })),
+// }));
+
+
+
+
 const useModelConfigStore = create((set) => ({
     Modelconfig: {
-        modelName: "ChatGPT",
-        input: "",
-        system_message: "",
-        temperature: 0.5,
-        maximum_tokens: 0,
-        API_key: "",
+        'modelName': 'ChatGPT',
+        'user prompt': '',
+        'system prompt': '',
+        'temperature': 0.5,
+        'maximum_tokens': 0,
+        'API KEY': '',
+        'nodeId':'',
     },
     setModelConfig: (newConfig) => set((state) => ({
         Modelconfig: { ...state.Modelconfig, ...newConfig }
-    })),
+    }))
 }));
+
+
 const useFileInputStore = create((set) => ({
     FileData: {
         filepath: "",
