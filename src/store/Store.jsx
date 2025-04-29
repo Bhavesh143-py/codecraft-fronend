@@ -205,46 +205,52 @@ const workflowSlice = createSlice({
             }
             state.workflows[workflowId].updated_at = new Date().toISOString();
         },
-        saveWorkflow :async ()=>{
-            const workflowId = state.selectedWorkflowId;
-            const workflow = state.workflows[workflowId];
+        updateWorkflow: (state, action) => {
+            const { workflowId, newWorkflow } = action.payload;
+
             if (workflowId && state.workflows[workflowId]) {
-                try{
-                    const requestData = {
-                        updated_at: new Date().toISOString(),
-                        dsl_file: {
-                           ...workflow
-                        }
-                    };
-
-                    console.log("Saving workflow to backend:", requestData);
-                    const response = await axios.put(
-                        `${import.meta.env.VITE_API_URL}/workflows/${workflowId}`,
-                        requestData
-                    );
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                // Go through each key in the new workflow
+                Object.entries(newWorkflow).forEach(([key, value]) => {
+                    // If the value is an object, do a deep merge (for nested objects like dsl_file)
+                    if (
+                        typeof value === 'object' &&
+                        value !== null &&
+                        !Array.isArray(value)
+                    ) {
+                        state.workflows[workflowId][key] = {
+                            ...(state.workflows[workflowId][key] || {}),
+                            ...value,
+                        };
+                    } else {
+                        // Replace directly for primitives or arrays
+                        state.workflows[workflowId][key] = value;
                     }
-                    if (response.data) {
-                        set(produce(state => {
-                            // Make sure to update the updated_at field
-                            state.workflows[workflowId].updated_at = requestData.updated_at;
-                            // If you're storing dsl_file separately in your state, update it too
-                            state.workflows[workflowId] = requestData.dsl_file;
-                        }));
-                    }
-                    const data = await response.json();
-                    console.log("Workflow saved successfully:", data);
-
-                }catch (error) {
-                    console.error("Error saving workflow:", error);
-                    return { success: false, message: "Failed to save workflow" };
-                }
+                });
             }
-            return { success: false, message: "No workflow selected" };
+        },  
+    },
+    extraReducers: (builder) => {
+        // Thunk action to save the workflow to the server
+        builder.addCase("workflows/saveWorkflow", (state, action) => {
+            const { workflowId, workflow } = action.payload;
 
-        }
-    }
+            if (workflowId && state.workflows[workflowId]) {
+                axios
+                    .put(`${import.meta.env.VITE_API_URL}/workflows/${workflowId}`, workflow)
+                    .then((response) => {
+                        if (response.status === 200) {
+                            state.workflows[workflowId] = response.data;
+                            state.workflows[workflowId].updated_at = new Date().toISOString();
+                        } else {
+                            console.error("Failed to save workflow", response);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error saving workflow:", error);
+                    });
+            }
+        });
+    },
 });
 export const {
     initializeWorkflow,
@@ -253,8 +259,7 @@ export const {
     addNode,
     removeNode,
     setConnection,
-    updateConnection,
-    saveWorkflow
+    updateConnection
 } = workflowSlice.actions;
 const store = configureStore({
     reducer: {
