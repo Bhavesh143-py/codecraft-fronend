@@ -15,21 +15,24 @@ import CustomNode from "../CustomNode/CustomNode";
 import { ModelNode } from "../CustomNode/ModelNode";
 import ChatInputConfig from "../Input-config/ChatInputConfig";
 import FileUploadForm from "../Input-config/FileConfig";
-import { useWorkflowStore } from "../store/Mystore";
 import { useNavigate } from "react-router-dom";
 import ChatComponent from "../utilities/Startworkflow";
+import { useSelector, useDispatch } from "react-redux";
+import {
+    saveWorkflow,
+    addNode,
+    updateNode,
+    updateConnection,
+    setConnections,
+    removeNode,
+    updateWorkflowMetadata
+} from "../store/Redux-Store";
+
 const Canvas = () => {
     const navigate = useNavigate();
-    const {
-        selectedWorkflowId,
-        workflows,
-        addNode: addNodeToStore,
-        updateNode: updateNodeInStore,
-        updateConnection: updateConnectionInStore,
-        setConnections: setConnectionsInStore,
-        removeNode: removeNodeFromStore,
-        updateWorkflowMetadata
-    } = useWorkflowStore();
+    const dispatch = useDispatch();
+    // Fix the state selector path to match the actual Redux structure
+    const { selectedWorkflowId, workflows } = useSelector((state) => state.workflows);
 
     const [nodes, setNodes, onNodesChange] = useNodesState([
         {
@@ -43,15 +46,15 @@ const Canvas = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [startworkflowwindow, setstartworkflowwindow] = useState(false);
+
     const nodeTypes = useMemo(() => ({
         customNode: CustomNode,
         customFile: CustomFile,
         ModelNode: ModelNode,
     }), []);
-    // Update your useEffect for loading workflow data to match the new structure
-    // currently there is no need as we are testing to create new (empty) workflow
+
     useEffect(() => {
-        if (selectedWorkflowId && workflows[selectedWorkflowId]) {
+        if (selectedWorkflowId && workflows && workflows[selectedWorkflowId]) {
             const workflowData = workflows[selectedWorkflowId];
 
             // Check if workflow has existing nodes
@@ -112,26 +115,22 @@ const Canvas = () => {
                 }
             }
         }
-    }, [selectedWorkflowId]);
+    }, [selectedWorkflowId, workflows, setNodes, setEdges]);
 
-    
-    // Remove the setTimeout in handleNodesChange and handleEdgesChange
     const handleNodesChange = useCallback((changes) => {
         // Look for node removals in the changes
         changes.forEach(change => {
             if (change.type === 'remove' && change.id) {
                 // Call your store's removeNode function when a node is deleted
                 if (selectedWorkflowId) {
-                    // Assuming you have a removeNode function in your store
-                    // Note: You need to add this function if it doesn't exist
-                    removeNodeFromStore(change.id);
+                    dispatch(removeNode(change.id));
                 }
             }
         });
 
         // Apply the changes to the ReactFlow state
         onNodesChange(changes);
-    }, [onNodesChange, selectedWorkflowId]);
+    }, [onNodesChange, selectedWorkflowId, dispatch]);
 
     const handleEdgesChange = useCallback((changes) => {
         onEdgesChange(changes);
@@ -142,24 +141,24 @@ const Canvas = () => {
         // This will run only when nodes change, not on every render
         if (selectedWorkflowId) {
             nodes.forEach(node => {
-                addNodeToStore({
+                dispatch(addNode({
                     id: node.id,
-                    type: node.type,
+                    type: node.data.label, // Fixed: use label as type for consistency
                     position: node.position,
                     data: node.data,
                     label: node.data.label
-                });
+                }));
             });
 
-            updateWorkflowMetadata({
+            dispatch(updateWorkflowMetadata({
                 updated_at: new Date().toISOString()
-            });
+            }));
         }
-    }, [nodes, addNodeToStore, updateWorkflowMetadata, selectedWorkflowId]);
+    }, [nodes, dispatch, selectedWorkflowId]);
 
     useEffect(() => {
         // This will run only when edges change, not on every render
-        if (selectedWorkflowId && workflows[selectedWorkflowId]) {
+        if (selectedWorkflowId && workflows && workflows[selectedWorkflowId]) {
             const connections = edges.map(edge => ({
                 from: {
                     node: edge.source,
@@ -171,13 +170,12 @@ const Canvas = () => {
                 }
             }));
 
-            setConnectionsInStore(connections);
-            updateWorkflowMetadata({
+            dispatch(setConnections(connections));
+            dispatch(updateWorkflowMetadata({
                 updated_at: new Date().toISOString()
-            });
+            }));
         }
-    }, [edges, setConnectionsInStore, selectedWorkflowId, updateWorkflowMetadata]);
-
+    }, [edges, selectedWorkflowId, dispatch, workflows]);
 
     const onConnect = useCallback((params) => {
         setEdges((eds) => {
@@ -197,21 +195,23 @@ const Canvas = () => {
 
             // Update the store with the new connection at the top level
             if (selectedWorkflowId) {
-                updateConnectionInStore(connection);
+                dispatch(updateConnection(connection));
             }
 
             return newEdges;
         });
-    }, [selectedWorkflowId, updateConnectionInStore]);
+    }, [selectedWorkflowId, dispatch, setEdges]);
+
     const onNodeContextMenu = (event, node) => {
-        console.log(node)
+        console.log(node);
         event.preventDefault();
         if (node.type === "customNode" || node.type === "customFile" || node.type === "ModelNode") {
             setSelectedNode(node);
             setIsModalOpen(true);
-            console.log(selectedNode)
+            console.log(selectedNode);
         }
     };
+
     const handleSettingsChange = useCallback((updatedSettings) => {
         if (!selectedNode) return;
 
@@ -241,32 +241,37 @@ const Canvas = () => {
 
         console.log("Updated Chat Settings for Node:", selectedNode.id, updatedSettings);
     }, [selectedNode, setNodes]);
+
     // Add a new node to the canvas and store it
     const onAddNode = (nodeLabel) => {
-        console.log(nodeLabel)
+        console.log(nodeLabel);
         const newNodeId = `node_${Date.now()}`;
         const newNode = {
             id: newNodeId,
             type: "customNode",
             position: { x: 400, y: 300 },
-            nodeId:nodeLabel.node_id,
+            nodeId: nodeLabel.node_id,
             data: {
                 label: nodeLabel.label,
                 chatSettings: { showSenderName: true, showSessionId: false },
-                nodeId:nodeLabel.node_id
+                nodeId: nodeLabel.node_id
             },
         };
 
         setNodes((nds) => nds.concat(newNode));
 
         // Add the node to the store
-        addNodeToStore({
+        dispatch(addNode({
             id: newNodeId,
             type: "customNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel },
-            label: nodeLabel
-        });
+            data: {
+                label: nodeLabel.label,
+                nodeId: nodeLabel.node_id,
+                chatSettings: { showSenderName: true, showSessionId: false }
+            },
+            label: nodeLabel.label
+        }));
     };
 
     const onAddFile = (nodeLabel) => {
@@ -284,13 +289,16 @@ const Canvas = () => {
         setNodes((nds) => nds.concat(newNode));
 
         // Add the node to the store
-        addNodeToStore({
+        dispatch(addNode({
             id: newNodeId,
             type: "customFile",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel },
+            data: {
+                label: nodeLabel,
+                chatSettings: { showSenderName: true, showSessionId: false }
+            },
             label: nodeLabel
-        });
+        }));
     };
 
     const onAddModelNode = (nodeLabel) => {
@@ -299,20 +307,28 @@ const Canvas = () => {
             id: newNodeId,
             type: "ModelNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel.label, model: true ,nodeId:nodeLabel.node_id,chatSettings: { showSenderName: true, showSessionId: false },},
-            
+            data: {
+                label: nodeLabel.label,
+                model: true,
+                nodeId: nodeLabel.node_id,
+                chatSettings: { showSenderName: true, showSessionId: false }
+            },
         };
 
         setNodes((nds) => nds.concat(newNode));
 
         // Add the node to the store
-        addNodeToStore({
+        dispatch(addNode({
             id: newNodeId,
             type: "ModelNode",
             position: { x: 400, y: 300 },
-            data: { label: nodeLabel, model: true },
-            label: nodeLabel
-        });
+            data: {
+                label: nodeLabel.label,
+                model: true,
+                nodeId: nodeLabel.node_id
+            },
+            label: nodeLabel.label
+        }));
     };
 
     const onNodeClick = useCallback((event, node) => {
@@ -321,8 +337,8 @@ const Canvas = () => {
 
     // Function to handle node drag and update position in store
     const onNodeDragStop = useCallback((event, node) => {
-        updateNodeInStore(node.id, { position: node.position });
-    }, [updateNodeInStore]);
+        dispatch(updateNode(node.id, { position: node.position }));
+    }, [dispatch]);
 
     const renderConfigForm = () => {
         if (!selectedNode) return null;
@@ -331,7 +347,6 @@ const Canvas = () => {
             case "ModelNode":
                 return (
                     <div>
-                        {/* <h2 className="text-lg font-semibold">Configurations</h2> */}
                         <button onClick={() => setSelectedNode(null)} className="float-right px-3 py-4 mt-5 mr-3 rounded">X</button>
                         <ModelNodeForm
                             selectedNode={selectedNode}
@@ -344,7 +359,12 @@ const Canvas = () => {
                                         ? { ...n, data: { ...n.data, ...config } }
                                         : n
                                 ));
-                                updateNodeInStore(selectedNode.id, { data: { ...selectedNode.data, ...config }, type: config.modelName });
+                                dispatch(updateNode(selectedNode.id, {
+                                    newData: {
+                                        data: { ...selectedNode.data, ...config },
+                                        type: config.modelName
+                                    }
+                                }));
                             }}
                         />
                     </div>
@@ -366,10 +386,12 @@ const Canvas = () => {
                                             : n
                                     )
                                 );
-                                updateNodeInStore(selectedNode.id, {
-                                    data: { ...selectedNode.data, ...config },
-                                    type: config.modelName,
-                                });
+                                dispatch(updateNode(selectedNode.id, {
+                                    newData: {
+                                        data: { ...selectedNode.data, ...config },
+                                        type: config.modelName,
+                                    }
+                                }));
                             }}
                         />
                     </div>
@@ -396,48 +418,25 @@ const Canvas = () => {
                             ));
 
                             // Update node in store with comprehensive file data
-                            updateNodeInStore(selectedNode.id, {
-                                data: {
-                                    ...selectedNode.data,
-                                    ...fileConfig
-                                },
-                                type: "File"
-                            });
+                            dispatch(updateNode(selectedNode.id, {
+                                newData: {
+                                    data: {
+                                        ...selectedNode.data,
+                                        ...fileConfig
+                                    },
+                                    type: "File"
+                                }
+                            }));
                         }}
                     />
                 );
-
+            default:
+                return null;
         }
     };
 
-    // Debug logging
-    useEffect(() => {
-        // Only log if we have a valid workflow
-        if (selectedWorkflowId && workflows[selectedWorkflowId]) {
-            console.log("Current workflows:", workflows);
-            console.log("Current selectedWorkflowId:", selectedWorkflowId);
-            console.log("Selected workflow data:", workflows[selectedWorkflowId]);
-        }
-    }, [workflows, selectedWorkflowId]);
-
-    // Add a check for the whole state
-    useEffect(() => {
-        console.log("Full workflow store state:", useWorkflowStore.getState());
-    }, []);
-
+    // Remove the problematic useWorkflowStore code block
     if (selectedWorkflowId === null) {
-        // Try to get workflows from the store
-        const storeState = useWorkflowStore.getState();
-        console.log("Store state in Canvas:", storeState);
-
-        // If there are workflows but none selected, select the first one
-        const workflowIds = Object.keys(storeState.workflows);
-        if (workflowIds.length > 0) {
-            const firstId = workflowIds[0];
-            storeState.selectWorkflow(firstId);
-            return <div>Selecting workflow {firstId}...</div>;
-        }
-
         return (
             <div className="p-8">
                 <h1 className="text-xl font-bold mb-4">No Workflow Selected</h1>
@@ -452,24 +451,17 @@ const Canvas = () => {
         );
     }
 
-    const saveWorkflow = async () => {
+    const handleSaveWorkflow = async () => {
         console.log("Saving workflow:", selectedWorkflowId);
-
         try {
-            const result = await useWorkflowStore.getState().saveWorkflow();
-
-            if (result.success) {
-                // Show success message
-                alert("Workflow saved successfully!");
-            } else {
-                // Show error message
-                alert(`Failed to save workflow: ${result.message}`);
-            }
+            await dispatch(saveWorkflow());
+            alert("Workflow saved successfully!");
         } catch (error) {
             console.error("Error in saveWorkflow:", error);
             alert("An unexpected error occurred while saving the workflow.");
         }
     };
+
     const handleCloseWorkflow = () => {
         setstartworkflowwindow(false);
     };
@@ -479,17 +471,17 @@ const Canvas = () => {
             <div className="flex h-screen flex-col">
                 <div className="flex justify-between items-center p-2 bg-gray-100 border-b">
                     <h1 className="text-xl font-bold capitalize">
-                        {workflows[selectedWorkflowId]?.workflow_name || "Workflow Editor"}
+                        {workflows && workflows[selectedWorkflowId]?.workflow_name || "Workflow Editor"}
                     </h1>
                     <div className="flex gap-4 items-center justify-end">
-                    <button
-                        onClick={saveWorkflow}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                        Save Workflow
-                    </button>
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    onClick={()=>setstartworkflowwindow(true)}>Run workflow</button>
+                        <button
+                            onClick={handleSaveWorkflow}
+                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                            Save Workflow
+                        </button>
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={() => setstartworkflowwindow(true)}>Run workflow</button>
                     </div>
                 </div>
                 <div className="flex flex-1">
@@ -528,7 +520,6 @@ const Canvas = () => {
                             <ChatComponent workflowId={selectedWorkflowId} startworkflowwindow={startworkflowwindow} onClose={handleCloseWorkflow} />
                         </div>
                     )}
-
                 </div>
             </div>
         </>

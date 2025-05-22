@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import img from "../assets/imges5.png";
 import { motion } from 'framer-motion';
 import AppCard from './Appcard';
-import { ChevronLeft, ChevronRight, MoreVertical, Plus, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight,  Plus, ArrowRight } from 'lucide-react';
 import axios from 'axios';
-import { useWorkflowStore } from "../store/Mystore";
+import { useDispatch } from 'react-redux';
+import { initializeWorkflow, selectWorkflow } from '../store/Redux-Store';
 
 
 export default function Apps() {
@@ -20,7 +21,8 @@ export default function Apps() {
   const buttonRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { initializeWorkflow, selectWorkflow } = useWorkflowStore();
+  const dispatch = useDispatch();
+  
 
   const fetchWorkflows = async () => {
     try {
@@ -70,11 +72,17 @@ export default function Apps() {
           };
 
           // Initialize in store
-          initializeWorkflow(workflowData.workflow_id, formattedWorkflow);
+          // initializeWorkflow(workflowData.workflow_id, formattedWorkflow);
 
           // Set as selected workflow
-          selectWorkflow(workflowId);
-
+          // selectWorkflow(workflowId);
+           dispatch(initializeWorkflow({
+                  id: workflowId,
+                  workflowData: {
+                    ...formattedWorkflow 
+                  }
+                }));
+          dispatch(selectWorkflow(workflowId));
           // Navigate to canvas
           navigate('/canvas');
         })

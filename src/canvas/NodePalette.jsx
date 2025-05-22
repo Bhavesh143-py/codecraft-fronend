@@ -5,6 +5,7 @@ import axios from 'axios';
 const NodePalette = ({ onAddNode, onAddFile, onAddModelNode }) => {
   const [openSections, setOpenSections] = useState({});
   const [nodes, setNodes] = useState([]);
+  const [groupedNodes, setGroupedNodes] = useState({});
 
   // Fetch nodes from the API using Axios
   useEffect(() => {
@@ -13,16 +14,27 @@ const NodePalette = ({ onAddNode, onAddFile, onAddModelNode }) => {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/panel_components`);
         const data = response.data;
 
-        console.log(data);
         setNodes(data);
-        
-        const initialSections = data.reduce((acc, node) => {
-          if (!acc[node.header]) acc[node.header] = false;
-          console.log(acc)
-          return acc;
-        }, {});
-        
+
+        // Process sections and group nodes once during fetch
+        const initialSections = {};
+        const groupedData = {};
+
+        data.forEach(node => {
+          // Initialize section in openSections state
+          if (!initialSections[node.header]) {
+            initialSections[node.header] = false;
+          }
+
+          // Group nodes by header
+          if (!groupedData[node.header]) {
+            groupedData[node.header] = [];
+          }
+          groupedData[node.header].push(node);
+        });
+
         setOpenSections(initialSections);
+        setGroupedNodes(groupedData);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -32,18 +44,11 @@ const NodePalette = ({ onAddNode, onAddFile, onAddModelNode }) => {
   }, []);
 
   const toggleSection = (section) => {
-    setOpenSections((prevState) => ({
+    setOpenSections(prevState => ({
       ...prevState,
       [section]: !prevState[section],
     }));
   };
-
-  const groupedNodes = nodes.reduce((acc, node) => {
-    if (!acc[node.header]) acc[node.header] = [];
-    acc[node.header].push(node);
-    console.log(acc)
-    return acc;
-  }, {});
 
   return (
     <aside className="w-64 bg-[#fefefe] rounded-lg shadow-lg p-2 font-ubuntu">
@@ -95,7 +100,8 @@ NodePalette.propTypes = {
   onAddNode: PropTypes.func.isRequired,
   onAddFile: PropTypes.func.isRequired,
   onAddModelNode: PropTypes.func.isRequired,
-  selectedWorkflowId: PropTypes.string.isRequired, // Assuming it's a string, adjust if necessary
+  // Note: selectedWorkflowId appears in propTypes but is not used in the component
+  selectedWorkflowId: PropTypes.string,
 };
 
 export default NodePalette;

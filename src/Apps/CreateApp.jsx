@@ -2,15 +2,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useWorkflowStore, workflowCreateStore } from "../store/Mystore";
+import { useDispatch, useSelector } from "react-redux";
+import { initializeWorkflow, selectWorkflow } from "../store/Redux-Store";
 import axios from "axios";
 import appImg from "../assets/create.svg";
 import congratulation from "../assets/congratulation.png"
 
 
 const CreateApp = () => {
-  const { initializeWorkflow, selectWorkflow } = useWorkflowStore();
-  const { appname, description, setAppname, setDescription } = workflowCreateStore();
+  const dispatch = useDispatch();
+  const [appname, setAppname] = useState("CodeCraft");
+  const [description, setDescription] = useState("");
   const [isAppCreated, setIsAppCreated] = useState(false);
   const navigate = useNavigate();
 
@@ -33,13 +35,18 @@ const CreateApp = () => {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/workflows/create`, payload);
       const workflowId = response.data.id || response.data.workflow_id;
 
-      initializeWorkflow(workflowId, {
-        ...response.data,
-        nodes: {},
-        connections: [],
-      });
+      // Initialize with the complete structure
+      // console.log("response:", response.data);
+      dispatch(initializeWorkflow({
+        id: workflowId,
+        workflowData: {
+          ...response.data,
+          nodes: {},
+          connections: [],
+        }
+      }));
 
-      selectWorkflow(workflowId);
+      dispatch(selectWorkflow(workflowId));
       return true;
     } catch (error) {
       console.error("API Error:", error.response ? error.response.data : error.message);

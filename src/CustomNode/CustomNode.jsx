@@ -12,18 +12,18 @@ const parseConfig = (configArray) => {
 };
 
 const CustomNode = ({ data }) => {
-  console.log(data)
   const { label, nodeId, onUpdate, chatSettings } = data || {};
 
   const [fields, setFields] = useState([]);
   const [fieldValues, setFieldValues] = useState({});
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const isStartNode = label === "Start Node";
 
-  // Fetch config and initialize field values
+  // Fetch config and initialize field values - only runs once
   useEffect(() => {
-    if (nodeId) {
+    if (nodeId && !isInitialized) {
       axios
         .get(`${import.meta.env.VITE_API_URL}/asset_configs`, {
           params: { node_id: nodeId },
@@ -31,32 +31,36 @@ const CustomNode = ({ data }) => {
         .then((res) => {
           const parsedFields = parseConfig(res.data);
           setFields(parsedFields);
-  
+
           const initialValues = {};
           parsedFields.forEach(({ label }) => {
             initialValues[label] = chatSettings?.[label] ?? data?.[label] ?? "";
-
           });
-  
+
           setFieldValues(initialValues);
-  
+          setIsInitialized(true);
+
+          // Only call onUpdate once during initialization, not on every render
           if (onUpdate) onUpdate(initialValues);
         })
         .catch((err) => {
           console.error("Error fetching node config:", err);
+          setIsInitialized(true); // Mark as initialized even on error to prevent retries
         });
     }
-  }, [nodeId, chatSettings]);
-  
+  }, [nodeId, isInitialized]);
 
   // Handle text/checkbox field changes
   const handleFieldChange = (label, value) => {
     const updated = { ...fieldValues, [label]: value };
     setFieldValues(updated);
+
+    // Update chatSettings reference without triggering the effect
     if (chatSettings) chatSettings[label] = value;
+
+    // Call onUpdate with the updated values
     if (onUpdate) onUpdate(updated);
   };
-
 
   // Handle file upload
   const handleFileChange = (event) => {
@@ -64,7 +68,6 @@ const CustomNode = ({ data }) => {
     setUploadedFile(file);
     if (onUpdate) onUpdate({ ...fieldValues, file });
   };
-
 
   return (
     <div className="w-[200px] bg-white text-[#0b0b0b] rounded-[12px] border border-[#c0e7fe] overflow-hidden text-center shadow-lg">
