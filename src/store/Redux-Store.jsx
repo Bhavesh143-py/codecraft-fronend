@@ -1,4 +1,6 @@
 import { configureStore, createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import axios from "axios";
 
 // Async thunk for saving workflow to backend
@@ -41,11 +43,7 @@ export const saveWorkflow = createAsyncThunk(
         }
 
         throw new Error("No workflow selected");
-    },
-    {
-                name: 'workflow-storage', // name of the item in localStorage
-                storage: createJSONStorage(() => localStorage),
-            }
+    }
 );
 
 // Create a slice for workflow management
@@ -54,6 +52,8 @@ const workflowSlice = createSlice({
     initialState: {
         workflows: {},
         selectedWorkflowId: null,
+        loading: false,
+        error: null,
     },
     reducers: {
         initializeWorkflow: (state, action) => {
@@ -292,23 +292,71 @@ const workflowSlice = createSlice({
 
             // Update timestamp
             state.workflows[workflowId].updated_at = new Date().toISOString();
+        },
+
+        // Clear error state
+        clearError: (state) => {
+            state.error = null;
         }
     },
     extraReducers: (builder) => {
         builder
+            .addCase(saveWorkflow.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
             .addCase(saveWorkflow.fulfilled, (state, action) => {
+                state.loading = false;
                 const workflowId = state.selectedWorkflowId;
                 if (workflowId && action.payload) {
                     // Update the workflow with the response data
-                    state.workflows[workflowId] = action.payload.dsl_file || action.payload;
-                    state.workflows[workflowId].updated_at = new Date().toISOString();
+                    state.workflows[workflowId] = {
+                        ...state.workflows[workflowId],
+                        ...(action.payload.dsl_file || action.payload),
+                        updated_at: new Date().toISOString()
+                    };
                 }
             })
             .addCase(saveWorkflow.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message || "Failed to save workflow";
                 console.error("Error saving workflow:", action.error);
             });
     }
 });
+
+// Persistence configuration
+const persistConfig = {
+    key: 'workflow-storage',
+    storage,
+    whitelist: ['workflows', 'selectedWorkflowId'], // persist workflows and selectedWorkflowId
+    blacklist: ['loading', 'error'], // don't persist loading and error states
+};
+
+// Create persisted reducer
+const persistedReducer = persistReducer(persistConfig, workflowSlice.reducer);
+
+// Create the store
+const store = configureStore({
+    reducer: {
+        workflows: persistedReducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: {
+                ignoredActions: [
+                    'persist/PERSIST',
+                    'persist/REHYDRATE',
+                    'persist/PAUSE',
+                    'persist/PURGE',
+                    'persist/REGISTER'
+                ],
+            },
+        }),
+});
+
+// Create persistor
+export const persistor = persistStore(store);
 
 // Export actions
 export const {
@@ -319,7 +367,8 @@ export const {
     removeNode,
     setConnections,
     updateConnection,
-    updateWorkflowMetadata
+    updateWorkflowMetadata,
+    clearError
 } = workflowSlice.actions;
 
 // Create selectors
@@ -355,11 +404,8 @@ export const selectSelectedWorkflow = (state) => {
     return null;
 };
 
-// Create the store
-const store = configureStore({
-    reducer: {
-        workflows: workflowSlice.reducer,
-    },
-});
+export const selectWorkflowLoading = (state) => state.workflows.loading;
+export const selectWorkflowError = (state) => state.workflows.error;
 
+// Export store as default
 export default store;
