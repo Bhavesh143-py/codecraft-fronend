@@ -1,85 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation hook for page routing
-import img1 from '../assets/Logo.png';
-import { Plus } from 'lucide-react'; // Import Plus icon
-import { ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import bell_notification from "../assets/5925587_alert_bell_notification_icon 1 (1).png";
+import profile from "../assets/businessman.png";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import logo from "../assets/Axoma-logo.svg"
 
 export default function Navbar() {
-  const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown toggle
-  const dropdownRef = useRef(null); // Reference to the dropdown menu
-  const buttonRef = useRef(null); // Reference to the button that triggers the dropdown
-  const location = useLocation(); // Get current route
-
-  // Function to toggle dropdown visibility
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const handleCreateFromBlank = () => {
-    navigate('/create-app');
-  };
-
-  // Close dropdown if clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target)
-      ) {
-        setIsDropdownOpen(false); // Close dropdown if clicked outside
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside); // Clean up the event listener
-    };
-  }, []);
-
   return (
-    <nav className="fixed top-0 left-0 w-full bg-gray-800 text-white p-2 shadow-md z-50 flex justify-between items-center">
-      <img src={img1} className="h-10" alt="Logo" />
+    <div className="grid grid-cols-[1.3fr_4fr_1.3fr] ">
+      {/* Left Section */}
+      <div className="">
+        <span className="">
+          <img src={logo} alt="" className='w-40 ml-5' />
+        </span>
+      </div>
 
-      {/* Only show "Create App" button if we're not on the login page */}
-      {location.pathname !== '/' && (
-        <div className="relative">
-          <button
-            ref={buttonRef}
-            onClick={toggleDropdown}
-            className="bg-[#ffffff] text-black px-3 py-1.5 rounded-md hover:bg-[#05a8ed] flex items-center gap-1.5 transition font-ubuntu text-sm hover:text-white mr-5"
-          >
-            <Plus className="h-4 w-4 font-ubuntu" /> Create App
-          </button>
-          {isDropdownOpen && (
-            <div
-              ref={dropdownRef}
-              className="absolute right-0 mt-2 w-52 bg-white text-black rounded-md shadow-md"
-            >
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-200 border-b-2 font-ubuntu"
-                onClick={handleCreateFromBlank}
-              >
-                <span className="flex justify-between items-center">
-                  From Blank
-                  <ArrowRight size={24} color="#05a8ed" />
-                </span>
-              </button>
-              <button
-                className="block w-full text-left px-4 py-2 hover:bg-gray-200 font-ubuntu" 
-              >
-                <span className="flex justify-between items-center">
-                  From Template
-                  <ArrowRight size={24} color="#05a8ed" />
-                </span>
-              </button>
-            </div>
-          )}
+      {/* Center Section */}
+      <div className=" p-2  text-center">
+        {/* <span className="text-lg font-bold">Dashboard</span> */}
+      </div>
+
+      {/* Right Section with Nested Grid */}
+      <div className="mt-auto mb-auto">
+        <div className="grid grid-cols-[1fr_5fr] items-center  p-2 ">
+          
+          {/* Notification Bell */}
+          <div className="flex ">
+            <img src={bell_notification} alt="Notification" className="w-[30px] h-[30px]" />
+          </div>
+          
+
+          {/* Profile Info */}
+          <div className="flex gap-2 items-center">
+            <img src={profile} alt="Profile" className="w-[40px] h-[40px] rounded-full object-cover border border-gray-300" />
+            <div className="max-w-[100px] overflow-hidden">
+            <h4 className="text-sm font-medium truncate">Steve R</h4>
+            <h6 className="text-xs text-gray-500 truncate">Tenant.x</h6>
+          </div>
+          <KeyboardArrowDownIcon className="text-gray-600" />
         </div>
-      )}
-    </nav>
+      </div>
+      </div>
+    </div>
   );
 }

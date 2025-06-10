@@ -23,9 +23,11 @@ const ModelNodeForm = ({ selectedNode, setSelectedNode, onUpdate }) => {
           }
         );        
         const data = response.data;
+        console.log(data)
 
         const parsedFields = data.map((item) => {
           const str = item[0];
+          console.log(str)
 
           // Dropdown field
           if (str.startsWith("dropdown:")) {

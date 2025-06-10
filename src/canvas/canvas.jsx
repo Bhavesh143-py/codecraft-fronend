@@ -18,6 +18,9 @@ import FileUploadForm from "../Input-config/FileConfig";
 import { useWorkflowStore } from "../store/Mystore";
 import { useNavigate } from "react-router-dom";
 import ChatComponent from "../utilities/Startworkflow";
+import Navbar from "../navbar/navbar";
+import CustomControls from "../CustomControls";
+import bgImage from "../assets/Backgroud-Image.svg"
 const Canvas = () => {
     const navigate = useNavigate();
     const {
@@ -42,6 +45,7 @@ const Canvas = () => {
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [selectedNode, setSelectedNode] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentWorkflowId,setWorkflowId]=useState()
     const [startworkflowwindow, setstartworkflowwindow] = useState(false);
     const nodeTypes = useMemo(() => ({
         customNode: CustomNode,
@@ -104,7 +108,8 @@ const Canvas = () => {
                     source: conn.from.node,
                     target: conn.to.node,
                     sourceHandle: conn.from.output,
-                    targetHandle: conn.to.input
+                    targetHandle: conn.to.input,
+                    style: { stroke: '#CCCCCC', strokeWidth: 2 }
                 }));
 
                 if (storedEdges.length > 0) {
@@ -416,6 +421,7 @@ const Canvas = () => {
         if (selectedWorkflowId && workflows[selectedWorkflowId]) {
             console.log("Current workflows:", workflows);
             console.log("Current selectedWorkflowId:", selectedWorkflowId);
+            setWorkflowId(selectedWorkflowId)
             console.log("Selected workflow data:", workflows[selectedWorkflowId]);
         }
     }, [workflows, selectedWorkflowId]);
@@ -477,7 +483,7 @@ const Canvas = () => {
     return (
         <>
             <div className="flex h-screen flex-col">
-                <div className="flex justify-between items-center p-2 bg-gray-100 border-b">
+                {/* <div className="flex justify-between items-center p-2 bg-gray-100 border-b">
                     <h1 className="text-xl font-bold capitalize">
                         {workflows[selectedWorkflowId]?.workflow_name || "Workflow Editor"}
                     </h1>
@@ -491,13 +497,16 @@ const Canvas = () => {
                     <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     onClick={()=>setstartworkflowwindow(true)}>Run workflow</button>
                     </div>
-                </div>
+                </div> */}
+
+                <Navbar ></Navbar>
                 <div className="flex flex-1">
                     <NodePalette
                         onAddNode={onAddNode}
                         onAddFile={onAddFile}
                         onAddModelNode={onAddModelNode}
-                        className="w-1/4 bg-white border-r border-gray-300 p-2 overflow-y-auto"
+                        selectedWorkflowId={currentWorkflowId}
+                        className=" bg-white border-r border-gray-300 p-2 overflow-y-auto"
                     />
                     <div className="flex-1 relative bg-[#eef9fa]">
                         <ReactFlow
@@ -513,11 +522,44 @@ const Canvas = () => {
                             proOptions={{ hideAttribution: true }}
                             fitView
                         >
-                            <Background className="bg-[#eef9fa]" />
-                            <MiniMap />
-                            <Controls className="flex flex-row gap-4 p-4 bg-gray-700 rounded-lg text-white" />
+                            {/* <Background className="bg-[#eef9fa] " /> */}
+                            <Background
+  style={{
+    backgroundImage: `url(${bgImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    
+  }}
+  className="bg-[#eef9fa] pointer-events-none "
+/>
+
+                            {/* <Controls className="flex flex-row gap-4 p-4 bg-gray-700 rounded-lg text-white" /> */}
+                            <CustomControls></CustomControls>
                         </ReactFlow>
                     </div>
+
+                    <div className="absolute right-20 mt-5 shadow-md shadow-black/25 bg-white p-3 rounded-sm w-[250px] ">
+                        <div className="flex gap-2 ">
+                              {/* Preview Button */}
+                                <button className="flex items-center m-auto gap-1 px-3 py-1.5  border border-[#00AEEF] text-[#00AEEF] rounded-md hover:bg-[#E6F9FF] transition dm-sans-child2 " onClick={()=>setstartworkflowwindow(true)}>
+                                  <svg
+                                 className="w-3.5 h-3.5"
+                                 fill="#00AEEF"
+                                viewBox="0 0 24 24"
+                                >
+                                <path d="M8 5v14l11-7z" />
+                                </svg>
+                                Preview
+                                 </button>
+
+                                {/* Save & Publish Button */}
+                                <button className="px-3 py-1.5 m-auto gap-1  bg-[#00E6B3] text-black rounded-md dm-sans-child hover:brightness-95 transition"  onClick={saveWorkflow}>
+                                 Save & Publish
+                                </button>
+                                </div>
+                    </div>
+
+
                     {selectedNode && isModalOpen && (
                         <div className="fixed inset-y-0 right-0 w-[450px] transform transition-transform duration-300 ease-in-out overflow-y-auto z-50 mt-40 rounded-2xl mb-6">
                             {renderConfigForm()}

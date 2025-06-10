@@ -1,1 +1,35 @@
 @import "tailwindcss";
+
+
+.dm-sans-workflow {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+
+.dm-sans-components {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+}
+
+
+.dm-sans-child {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.dm-sans-child2 {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 300;
+  font-size: 13px;
+}
+
+
+/* styles.css */
+
+
+
+
